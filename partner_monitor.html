@@ -985,7 +985,9 @@
   <div class="header-right">
     <div class="api-input-group">
       <label>API KEY</label>
-      <input type="password" id="apiKeyInput" placeholder="YouTube Data API v3 키 입력" autocomplete="off">
+      <input type="password" id="apiKeyInput" placeholder="YouTube Data API v3 키 입력" autocomplete="off" oninput="saveApiKey()">
+    </div>
+    <span id="apiKeySaved" style="font-size:11px;color:var(--text-muted)"></span>
     </div>
 
     <!-- 기간 선택 -->
@@ -1446,7 +1448,7 @@ const PUBGM_EXCLUDE_KEYWORDS = [
   'pubg pc', 'pubg: battlegrounds', '배그 pc', 'pc배그',
 ];
 
-let partners = JSON.parse(sessionStorage.getItem('pm_partners') || 'null') || [
+let partners = JSON.parse(localStorage.getItem('pm_partners') || 'null') || [
   { name: '상책이', handle: '@sangcheck2'   },
   { name: '시어',   handle: '@seer_5228'    },
   { name: '세드',   handle: '@세드님'        },
@@ -1467,8 +1469,12 @@ let autoRefreshTimer = null;
 //  초기화
 // ─────────────────────────────────────────────────────────
 window.onload = () => {
-  const savedKey = sessionStorage.getItem('pm_apikey');
-  if (savedKey) document.getElementById('apiKeyInput').value = savedKey;
+  const savedKey = localStorage.getItem('pm_apikey');
+  if (savedKey) {
+    document.getElementById('apiKeyInput').value = savedKey;
+    document.getElementById('apiKeySaved').textContent = '✓ 저장됨';
+    document.getElementById('apiKeySaved').style.color = 'var(--green)';
+  }
   renderChannelTags();
 
   // 날짜 직접입력 기본값 설정 (오늘 기준 30일)
@@ -1509,7 +1515,7 @@ function addChannel() {
   if (!name || !handle) { showToast('이름과 핸들을 모두 입력해주세요', 'error'); return; }
   const h = handle.startsWith('@') ? handle : '@' + handle;
   partners.push({ name, handle: h });
-  sessionStorage.setItem('pm_partners', JSON.stringify(partners));
+  localStorage.setItem('pm_partners', JSON.stringify(partners));
   document.getElementById('newChannelName').value  = '';
   document.getElementById('newChannelHandle').value = '';
   renderChannelTags();
@@ -1518,7 +1524,7 @@ function addChannel() {
 
 function removeChannel(i) {
   partners.splice(i, 1);
-  sessionStorage.setItem('pm_partners', JSON.stringify(partners));
+  localStorage.setItem('pm_partners', JSON.stringify(partners));
   renderChannelTags();
 }
 
@@ -1531,7 +1537,7 @@ const API_BASE = 'https://www.googleapis.com/youtube/v3';
 async function yt(endpoint, params) {
   const key = document.getElementById('apiKeyInput').value.trim();
   if (!key) throw new Error('API 키를 먼저 입력해주세요');
-  sessionStorage.setItem('pm_apikey', key);
+  localStorage.setItem('pm_apikey', key);
   const url = `${API_BASE}/${endpoint}?${new URLSearchParams({ ...params, key })}`;
 
   // 1차: 직접 호출 시도
@@ -1679,6 +1685,19 @@ function isPubgm(text) {
 // ─────────────────────────────────────────────────────────
 //  기간 선택 유틸
 // ─────────────────────────────────────────────────────────
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  const indicator = document.getElementById('apiKeySaved');
+  if (key) {
+    localStorage.setItem('pm_apikey', key);
+    indicator.textContent = '✓ 저장됨';
+    indicator.style.color = 'var(--green)';
+  } else {
+    localStorage.removeItem('pm_apikey');
+    indicator.textContent = '';
+  }
+}
+
 function applyPreset() {
   const preset = document.getElementById('periodPreset').value;
   const dateInputs = document.getElementById('dateInputs');
