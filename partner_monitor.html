@@ -205,13 +205,13 @@ tr.drow:hover td{background:rgba(247,183,49,.02)}
 
 <main>
 <div class="tabs">
-  <button class="tab active" onclick="stab('yt',this)">▶ YouTube <span class="tab-bdg" id="ytBdg">—</span></button>
+  <button class="tab active" onclick="stab('int',this)">통합 현황</button>
+  <button class="tab" onclick="stab('yt',this)">▶ YouTube <span class="tab-bdg" id="ytBdg">—</span></button>
   <button class="tab" onclick="stab('sns',this)">TikTok · Instagram <span class="tab-bdg" id="snsBdg">—</span></button>
-  <button class="tab" onclick="stab('int',this)">통합 현황</button>
 </div>
 
 <!-- ══════════════ YouTube 탭 ══════════════ -->
-<div class="panel active" id="pyt">
+<div class="panel" id="pyt">
   <!-- Row 1 -->
   <div class="row1">
     <div class="scard gold"><div class="lbl">총 파트너 수</div><div class="val" id="ytP">—</div><div class="sub">모니터링 채널</div></div>
@@ -332,7 +332,7 @@ tr.drow:hover td{background:rgba(247,183,49,.02)}
 </div>
 
 <!-- ══════════════ 통합 현황 탭 ══════════════ -->
-<div class="panel" id="pint">
+<div class="panel active" id="pint">
   <!-- Row 1 -->
   <div class="row1">
     <div class="scard gold"><div class="lbl">총 파트너 수</div><div class="val" id="intP">—</div><div class="sub">YT + TT + IG</div></div>
@@ -405,6 +405,8 @@ window.onload = () => {
   document.getElementById('dateFrom').value = f.toLocaleDateString('sv-SE');
   const s = localStorage.getItem('pm_sns_data');
   if(s){ snsData=JSON.parse(s); rSnsAll(); }
+  // 초기 통합현황 차트 렌더 (패널 표시 후)
+  requestAnimationFrame(()=>{ rIntAll(); });
 };
 
 function saveApiKey(){ const k=document.getElementById('apiKeyInput').value.trim(); localStorage.setItem('pm_apikey',k); setSaved(!!k); }
@@ -414,7 +416,11 @@ function stab(n,btn){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   btn.classList.add('active'); document.getElementById('p'+n).classList.add('active');
-  if(n==='int') rIntAll();
+  requestAnimationFrame(()=>{
+    if(n==='yt') rDailyChart('yt');
+    else if(n==='sns') rDailyChart('sns');
+    else if(n==='int') rIntAll();
+  });
 }
 
 function applyPreset(){
@@ -460,27 +466,34 @@ async function getVStats(ids){
 }
 
 async function getVids(chId,after,before){
+  // search API 대신 채널의 모든 영상을 수집 후 로컬 필터링 → 누락 방지
+  // 1단계: search로 기간 내 모든 영상 ID 수집 (페이지 제한 없이 끝까지)
   let items=[],pt;
-  for(let p=0;p<3;p++){
-    const ps={part:'snippet',channelId:chId,order:'date',maxResults:50,type:'video',publishedAfter:after,publishedBefore:before,...(pt?{pageToken:pt}:{})};
+  let pageCount=0;
+  while(true){
+    const ps={part:'id',channelId:chId,order:'date',maxResults:50,type:'video',
+      publishedAfter:after,publishedBefore:before,...(pt?{pageToken:pt}:{})};
     const d=await ytFetch('search',ps);
     items=items.concat(d.items||[]);
-    if(!d.nextPageToken||!d.items?.length)break;
+    pageCount++;
+    if(!d.nextPageToken||!d.items?.length||pageCount>=10)break; // 최대 500건
     pt=d.nextPageToken;
   }
   if(!items.length)return[];
-  const ids=items.map(i=>i.id.videoId).filter(Boolean);
+
+  // 2단계: videos API로 실제 메타데이터 수집 (제목+설명 포함) — 50개씩 배치
+  const ids=[...new Set(items.map(i=>i.id?.videoId||(typeof i.id==='string'?i.id:null)).filter(Boolean))];
   const stats=[]; for(let i=0;i<ids.length;i+=50)stats.push(...await getVStats(ids.slice(i,i+50)));
-  const sm=Object.fromEntries(stats.map(v=>[v.id,v]));
-  return items.map(i=>{
-    const v=sm[i.id.videoId]||{};
-    const t=i.snippet.title+' '+(i.snippet.description||'');
-    return{id:i.id.videoId,title:i.snippet.title,publishedAt:i.snippet.publishedAt,
-      thumbnail:i.snippet.thumbnails?.medium?.url||i.snippet.thumbnails?.default?.url,
+
+  // 3단계: 로컬에서 PUBGM 키워드 필터링 (제목+설명 기준 — 누락 없음)
+  return stats.map(v=>{
+    const t=(v.snippet?.title||'')+' '+(v.snippet?.description||'');
+    return{id:v.id,title:v.snippet?.title||'',publishedAt:v.snippet?.publishedAt||'',
+      thumbnail:v.snippet?.thumbnails?.medium?.url||v.snippet?.thumbnails?.default?.url,
       viewCount:parseInt(v.statistics?.viewCount||0),likeCount:parseInt(v.statistics?.likeCount||0),
       commentCount:parseInt(v.statistics?.commentCount||0),durationSecs:pDur(v.contentDetails?.duration),
       isShorts:isSh(v.contentDetails?.duration,t),isPubgm:isPG(t),isAmbiguous:cls(t)==='ambiguous'};
-  });
+  }).filter(v=>v.publishedAt); // 유효한 영상만
 }
 
 async function fetchAll(){
@@ -806,6 +819,8 @@ function rDailyChart(tab, dr){
   const niceMax=niceScale(maxRaw);
 
   // 캔버스 렌더
+  // 패널이 숨겨져 있으면 재시도
+  if(canvas.offsetWidth===0){ setTimeout(()=>rDailyChart(tab,dr),50); return; }
   const dpr=window.devicePixelRatio||1;
   canvas.width=canvas.offsetWidth*dpr;
   canvas.height=canvas.offsetHeight*dpr;
