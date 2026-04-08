@@ -393,6 +393,7 @@ let partners = JSON.parse(localStorage.getItem('pm_partners')||'null') || [
   {name:'오살',handle:'@pubgmosal'}
 ];
 let ytData=[], snsData=[], sf='all', sk='weekly', sd=-1;
+let lastDR=null; // 마지막 조회 날짜 범위 저장
 
 // 날짜 문자열을 YYYY-MM-DD 형식으로 정규화
 function normDate(s){
@@ -558,7 +559,7 @@ async function fetchAll(){
     ytData=res;
     document.getElementById('ytBdg').textContent=res.filter(r=>!r.error).length+'개';
     document.getElementById('updateTime').textContent='업데이트: '+new Date().toLocaleString('ko-KR')+' · '+dr.label;
-    rYtAll(dr); rIntAll();
+    lastDR=dr; rYtAll(dr); rIntAll();
     toast(`${res.filter(r=>!r.error).length}개 채널 수집 완료`,'ok');
   }catch(e){toast(e.message,'err');}
   finally{btn.disabled=false;ld.style.display='none';}
@@ -813,7 +814,7 @@ function rDailyChart(tab, dr){
   const metric=tab==='yt'?ytDM:tab==='sns'?snsDM:intDM;
 
   // 날짜 범위 — 전달된 dr 우선, 없으면 getDR(), 그래도 없으면 YouTube/SNS 데이터에서 자동 추출
-  let dr2=dr||getDR();
+  let dr2=dr||lastDR||getDR();
   if(!dr2){
     // 데이터에서 날짜 범위 자동 추출
     const allRaw=[];
@@ -863,7 +864,7 @@ function rDailyChart(tab, dr){
 
   // 캔버스 렌더
   // 패널이 숨겨져 있으면 재시도
-  if(canvas.offsetWidth===0){ setTimeout(()=>rDailyChart(tab,dr),50); return; }
+  if(canvas.offsetWidth===0){ setTimeout(()=>rDailyChart(tab,dr2),50); return; }
   const dpr=window.devicePixelRatio||1;
   canvas.width=canvas.offsetWidth*dpr;
   canvas.height=canvas.offsetHeight*dpr;
