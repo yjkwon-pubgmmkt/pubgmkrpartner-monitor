@@ -4,995 +4,186 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PUBGM 파트너 성과 모니터링</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #080c10;
-    --surface: #0d1219;
-    --surface2: #131b24;
-    --border: #1e2d3d;
-    --gold: #f7b731;
-    --gold-dim: #c9922a;
-    --cyan: #29d6e0;
-    --red: #ff4d4d;
-    --green: #2ecc71;
-    --text: #e8edf3;
-    --text-muted: #5a7089;
-    --text-dim: #8aa0b4;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Noto Sans KR', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* ── 배경 그리드 효과 ── */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(247,183,49,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(247,183,49,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* ── 헤더 ── */
-  header {
-    position: relative;
-    z-index: 10;
-    padding: 24px 40px;
-    border-bottom: 1px solid var(--border);
-    background: linear-gradient(180deg, rgba(247,183,49,0.06) 0%, transparent 100%);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    flex-wrap: wrap;
-  }
-
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-
-  .logo-mark {
-    width: 40px; height: 40px;
-    background: var(--gold);
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    color: #000;
-    flex-shrink: 0;
-  }
-
-  h1 {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    color: var(--gold);
-    text-transform: uppercase;
-  }
-
-  h1 span {
-    display: block;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-size: 11px;
-    font-weight: 400;
-    color: var(--text-dim);
-    letter-spacing: 1px;
-    text-transform: none;
-    margin-top: 2px;
-  }
-
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  /* ── API 키 입력 ── */
-  .api-input-group {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-  .api-input-group:focus-within { border-color: var(--gold-dim); }
-
-  .api-input-group label {
-    padding: 0 12px;
-    font-size: 10px;
-    color: var(--text-muted);
-    letter-spacing: 1px;
-    white-space: nowrap;
-    border-right: 1px solid var(--border);
-    height: 36px;
-    display: flex;
-    align-items: center;
-  }
-
-  .api-input-group input {
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-size: 12px;
-    padding: 0 12px;
-    width: 220px;
-    height: 36px;
-    font-family: 'Rajdhani', sans-serif;
-    letter-spacing: 1px;
-  }
-
-  .api-input-group input::placeholder { color: var(--text-muted); }
-
-  /* ── 버튼 ── */
-  .btn {
-    height: 36px;
-    padding: 0 18px;
-    border: none;
-    border-radius: 6px;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex; align-items: center; gap: 6px;
-    white-space: nowrap;
-  }
-
-  .btn-primary {
-    background: var(--gold);
-    color: #000;
-  }
-  .btn-primary:hover { background: #ffc842; transform: translateY(-1px); }
-  .btn-primary:active { transform: translateY(0); }
-  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-  .btn-secondary {
-    background: var(--surface2);
-    color: var(--text-dim);
-    border: 1px solid var(--border);
-  }
-  .btn-secondary:hover { border-color: var(--gold-dim); color: var(--gold); }
-
-  .update-time {
-    font-size: 11px;
-    color: var(--text-muted);
-    white-space: nowrap;
-  }
-
-  /* ── 메인 레이아웃 ── */
-  main {
-    position: relative;
-    z-index: 1;
-    padding: 32px 40px;
-    max-width: 1600px;
-    margin: 0 auto;
-  }
-
-  /* ── 요약 카드 ── */
-  .summary-cards {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 32px;
-  }
-
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px 24px;
-    position: relative;
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-  .card:hover { border-color: rgba(247,183,49,0.3); }
-
-  .card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-  }
-  .card.gold::before { background: linear-gradient(90deg, transparent, var(--gold), transparent); }
-  .card.cyan::before { background: linear-gradient(90deg, transparent, var(--cyan), transparent); }
-  .card.green::before { background: linear-gradient(90deg, transparent, var(--green), transparent); }
-  .card.red::before { background: linear-gradient(90deg, transparent, var(--red), transparent); }
-
-  .card-label {
-    font-size: 10px;
-    color: var(--text-muted);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
-
-  .card-value {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 36px;
-    font-weight: 700;
-    line-height: 1;
-    color: var(--text);
-  }
-  .card.gold .card-value { color: var(--gold); }
-  .card.cyan .card-value { color: var(--cyan); }
-  .card.green .card-value { color: var(--green); }
-  .card.red .card-value { color: var(--red); }
-
-  .card-sub {
-    margin-top: 6px;
-    font-size: 11px;
-    color: var(--text-muted);
-  }
-
-  /* ── 필터/컨트롤 바 ── */
-  .controls {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-  }
-
-  .search-box {
-    display: flex;
-    align-items: center;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 0 12px;
-    gap: 8px;
-    transition: border-color 0.2s;
-  }
-  .search-box:focus-within { border-color: var(--gold-dim); }
-  .search-box svg { color: var(--text-muted); flex-shrink: 0; }
-  .search-box input {
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-size: 13px;
-    font-family: 'Noto Sans KR', sans-serif;
-    height: 36px;
-    width: 180px;
-  }
-  .search-box input::placeholder { color: var(--text-muted); }
-
-  .sort-select {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text-dim);
-    font-family: 'Noto Sans KR', sans-serif;
-    font-size: 12px;
-    padding: 0 12px;
-    height: 36px;
-    outline: none;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    appearance: none;
-    -webkit-appearance: none;
-    padding-right: 32px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a7089' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-  }
-  .sort-select:focus { border-color: var(--gold-dim); }
-
-  .toggle-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--text-dim);
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .toggle-label input[type="checkbox"] { display: none; }
-
-  .toggle-pill {
-    width: 36px; height: 20px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    position: relative;
-    transition: all 0.2s;
-  }
-  .toggle-pill::after {
-    content: '';
-    position: absolute;
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: var(--text-muted);
-    top: 2px; left: 2px;
-    transition: all 0.2s;
-  }
-  input[type="checkbox"]:checked ~ .toggle-pill {
-    background: rgba(247,183,49,0.2);
-    border-color: var(--gold-dim);
-  }
-  input[type="checkbox"]:checked ~ .toggle-pill::after {
-    transform: translateX(16px);
-    background: var(--gold);
-  }
-
-  .controls-right { margin-left: auto; }
-
-  /* ── 파트너 채널 입력 섹션 ── */
-  .channel-setup {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 24px 28px;
-    margin-bottom: 24px;
-  }
-
-  .section-title {
-    font-size: 12px;
-    color: var(--text-muted);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .section-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  .channel-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-
-  .channel-tag {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 4px 12px 4px 10px;
-    font-size: 12px;
-    color: var(--text-dim);
-    transition: all 0.2s;
-  }
-  .channel-tag:hover { border-color: var(--gold-dim); color: var(--text); }
-
-  .channel-tag .dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--gold);
-    flex-shrink: 0;
-  }
-
-  .channel-tag .remove {
-    cursor: pointer;
-    color: var(--text-muted);
-    font-size: 14px;
-    line-height: 1;
-    margin-left: 2px;
-    transition: color 0.2s;
-  }
-  .channel-tag .remove:hover { color: var(--red); }
-
-  .add-channel-row {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
-
-  .add-channel-input {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    font-family: 'Noto Sans KR', sans-serif;
-    font-size: 12px;
-    padding: 0 14px;
-    height: 34px;
-    outline: none;
-    width: 200px;
-    transition: border-color 0.2s;
-  }
-  .add-channel-input:focus { border-color: var(--gold-dim); }
-  .add-channel-input::placeholder { color: var(--text-muted); }
-
-  /* ── 테이블 ── */
-  .table-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-  }
-
-  .partner-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .partner-table th {
-    background: var(--surface2);
-    color: var(--text-muted);
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 12px 20px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-  }
-  .partner-table th.sortable { cursor: pointer; user-select: none; }
-  .partner-table th.sortable:hover { color: var(--gold); }
-  .partner-table th .sort-icon { margin-left: 4px; opacity: 0.4; }
-  .partner-table th.active-sort { color: var(--gold); }
-  .partner-table th.active-sort .sort-icon { opacity: 1; }
-
-  .partner-table td {
-    padding: 14px 20px;
-    border-bottom: 1px solid rgba(30,45,61,0.5);
-    vertical-align: middle;
-    font-size: 13px;
-  }
-
-  .partner-row {
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .partner-row:hover { background: rgba(247,183,49,0.03); }
-  .partner-row:last-child td { border-bottom: none; }
-
-  .partner-row.expanded { background: rgba(247,183,49,0.04); }
-
-  .channel-name-cell {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .channel-avatar {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    background: var(--surface2);
-    border: 2px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    color: var(--gold);
-    flex-shrink: 0;
-    overflow: hidden;
-  }
-  .channel-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-  .channel-info .name {
-    font-weight: 500;
-    color: var(--text);
-    font-size: 14px;
-  }
-  .channel-info .handle {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 2px;
-  }
-
-  .metric-cell { font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 500; }
-  .metric-cell.highlight { color: var(--gold); }
-
-  .weekly-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 10px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 700;
-  }
-  .weekly-badge.good { background: rgba(46,204,113,0.12); color: var(--green); }
-  .weekly-badge.warn { background: rgba(255,77,77,0.12); color: var(--red); }
-  .weekly-badge.ok   { background: rgba(247,183,49,0.12); color: var(--gold); }
-
-  .expand-icon {
-    transition: transform 0.2s;
-    color: var(--text-muted);
-    font-size: 10px;
-  }
-  .partner-row.expanded .expand-icon { transform: rotate(180deg); }
-
-  /* ── 펼침 영역 ── */
-  .video-list-row td {
-    padding: 0;
-    background: rgba(8,12,16,0.5);
-  }
-  .video-list-row.hidden { display: none; }
-
-  .video-list {
-    padding: 16px 20px 16px 68px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 12px;
-    border-top: none;
-  }
-
-  .format-tab {
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    color: var(--text-muted);
-    font-family: 'Noto Sans KR', sans-serif;
-    font-size: 11px;
-    padding: 4px 12px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .format-tab:hover { border-color: var(--gold-dim); color: var(--text-dim); }
-  .format-tab.active { background: rgba(247,183,49,0.12); border-color: var(--gold-dim); color: var(--gold); font-weight: 500; }
-
-  .video-card {
-    display: flex;
-    gap: 12px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px;
-    transition: border-color 0.2s;
-    text-decoration: none;
-    cursor: pointer;
-  }
-  .video-card:hover { border-color: rgba(247,183,49,0.3); }
-
-  .video-thumb {
-    width: 80px; height: 54px;
-    border-radius: 4px;
-    background: var(--surface2);
-    flex-shrink: 0;
-    overflow: hidden;
-    position: relative;
-  }
-  .video-thumb img { width: 100%; height: 100%; object-fit: cover; }
-  .video-thumb .pubgm-badge {
-    position: absolute;
-    top: 3px; right: 3px;
-    background: var(--gold);
-    color: #000;
-    font-size: 8px;
-    font-weight: 700;
-    padding: 1px 4px;
-    border-radius: 2px;
-    letter-spacing: 0.5px;
-  }
-  .video-thumb .ambiguous-badge {
-    position: absolute;
-    top: 3px; right: 3px;
-    background: #ff9500;
-    color: #000;
-    font-size: 8px;
-    font-weight: 700;
-    padding: 1px 4px;
-    border-radius: 2px;
-    letter-spacing: 0.5px;
-  }
-  .video-card.ambiguous {
-    border-color: rgba(255,149,0,0.35);
-  }
-  .video-card.ambiguous:hover {
-    border-color: rgba(255,149,0,0.7);
-  }
-  .ambiguous-note {
-    font-size: 10px;
-    color: #ff9500;
-    margin-top: 3px;
-    display: flex;
-    align-items: center;
-    gap: 3px;
-  }
-
-  .video-meta { flex: 1; min-width: 0; }
-  .video-title {
-    font-size: 11px;
-    color: var(--text);
-    line-height: 1.4;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    margin-bottom: 6px;
-  }
-  .video-stats {
-    display: flex;
-    gap: 10px;
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 11px;
-    color: var(--text-muted);
-  }
-  .video-stats span { display: flex; align-items: center; gap: 3px; }
-
-  /* ── 로딩 ── */
-  .loading-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(8,12,16,0.8);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 16px;
-  }
-  .loading-overlay.active { display: flex; }
-
-  .spinner {
-    width: 40px; height: 40px;
-    border: 3px solid var(--border);
-    border-top-color: var(--gold);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .loading-text {
-    font-size: 13px;
-    color: var(--text-muted);
-    letter-spacing: 1px;
-  }
-
-  /* ── 알림 ── */
-  .toast {
-    position: fixed;
-    bottom: 24px; right: 24px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 18px;
-    font-size: 13px;
-    color: var(--text-dim);
-    z-index: 200;
-    transform: translateY(20px);
-    opacity: 0;
-    transition: all 0.3s;
-    max-width: 320px;
-  }
-  .toast.show { transform: translateY(0); opacity: 1; }
-  .toast.error { border-color: rgba(255,77,77,0.4); color: var(--red); }
-  .toast.success { border-color: rgba(46,204,113,0.4); color: var(--green); }
-
-  /* ── 빈 상태 ── */
-  .empty-state {
-    padding: 60px 20px;
-    text-align: center;
-  }
-  .empty-state .icon { font-size: 40px; margin-bottom: 16px; opacity: 0.4; }
-  .empty-state p { color: var(--text-muted); font-size: 14px; line-height: 1.8; }
-
-  /* ── 오토 리프레시 ── */
-  .auto-refresh-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 11px;
-    color: var(--text-muted);
-  }
-
-  .date-range-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .date-inputs {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .date-input {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    font-family: 'Noto Sans KR', sans-serif;
-    font-size: 12px;
-    padding: 0 10px;
-    height: 36px;
-    outline: none;
-    width: 130px;
-    transition: border-color 0.2s;
-    color-scheme: dark;
-  }
-  .date-input:focus { border-color: var(--gold-dim); }
-
-  /* ── 메인 탭 네비게이션 ── */
-  .main-tabs {
-    display: flex;
-    gap: 0;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 28px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .main-tab {
-    padding: 12px 28px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-muted);
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    margin-bottom: -1px;
-    font-family: 'Noto Sans KR', sans-serif;
-  }
-  .main-tab:hover { color: var(--text-dim); }
-  .main-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
-  .main-tab .tab-badge {
-    background: rgba(247,183,49,0.15);
-    color: var(--gold);
-    font-size: 10px;
-    padding: 1px 6px;
-    border-radius: 10px;
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 700;
-  }
-  .main-tab .platform-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    display: inline-block;
-  }
-
-  .tab-panel { display: none; }
-  .tab-panel.active { display: block; }
-
-  /* ── Sheets 연동 패널 ── */
-  .sheets-setup {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 24px 28px;
-    margin-bottom: 24px;
-  }
-
-  .sheets-setup .setup-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .sheets-id-input {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    font-family: 'Rajdhani', monospace;
-    font-size: 12px;
-    padding: 0 14px;
-    height: 36px;
-    outline: none;
-    width: 340px;
-    letter-spacing: 0.5px;
-    transition: border-color 0.2s;
-  }
-  .sheets-id-input:focus { border-color: var(--gold-dim); }
-  .sheets-id-input::placeholder { color: var(--text-muted); font-family: 'Noto Sans KR', sans-serif; letter-spacing: 0; }
-
-  .sheets-status {
-    font-size: 11px;
-    padding: 3px 10px;
-    border-radius: 20px;
-    display: none;
-  }
-  .sheets-status.ok     { background: rgba(46,204,113,0.1); color: var(--green); display: inline-flex; align-items: center; gap: 4px; }
-  .sheets-status.error  { background: rgba(255,77,77,0.1);  color: var(--red);   display: inline-flex; align-items: center; gap: 4px; }
-  .sheets-status.loading { background: rgba(247,183,49,0.1); color: var(--gold); display: inline-flex; align-items: center; gap: 4px; }
-
-  .sheets-help {
-    margin-top: 14px;
-    padding: 12px 16px;
-    background: rgba(41,214,224,0.04);
-    border: 1px solid rgba(41,214,224,0.15);
-    border-radius: 8px;
-    font-size: 11px;
-    color: var(--text-muted);
-    line-height: 1.8;
-  }
-  .sheets-help b { color: var(--cyan); }
-
-  /* ── SNS 데이터 테이블 ── */
-  .sns-table-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 24px;
-  }
-
-  .sns-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .sns-table th {
-    background: var(--surface2);
-    color: var(--text-muted);
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 12px 16px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-  }
-  .sns-table td {
-    padding: 12px 16px;
-    border-bottom: 1px solid rgba(30,45,61,0.5);
-    font-size: 13px;
-    vertical-align: middle;
-  }
-  .sns-table tr:last-child td { border-bottom: none; }
-  .sns-table tr:hover td { background: rgba(247,183,49,0.02); }
-
-  .platform-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 2px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 500;
-  }
-  .platform-pill.tiktok    { background: rgba(0,0,0,0.4); border: 1px solid #333; color: #fff; }
-  .platform-pill.instagram { background: rgba(193,53,132,0.12); border: 1px solid rgba(193,53,132,0.3); color: #e1306c; }
-
-  /* ── 통합 현황 ── */
-  .integrated-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-
-  .integrated-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 18px 20px;
-    transition: border-color 0.2s;
-  }
-  .integrated-card:hover { border-color: rgba(247,183,49,0.2); }
-
-  .integrated-card .plat-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-dim);
-  }
-  .integrated-card .plat-icon {
-    width: 24px; height: 24px;
-    border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px;
-  }
-  .plat-icon.yt  { background: rgba(255,0,0,0.15); }
-  .plat-icon.tt  { background: rgba(255,255,255,0.07); }
-  .plat-icon.ig  { background: rgba(193,53,132,0.15); }
-
-  .integrated-stat {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 0;
-    border-bottom: 1px solid rgba(30,45,61,0.4);
-  }
-  .integrated-stat:last-child { border-bottom: none; }
-  .integrated-stat .label { font-size: 11px; color: var(--text-muted); }
-  .integrated-stat .value { font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); }
-
-  .total-bar-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px 24px;
-    margin-bottom: 24px;
-  }
-  .total-bar-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 10px;
-  }
-  .total-bar-label { width: 80px; font-size: 12px; color: var(--text-dim); }
-  .total-bar-track {
-    flex: 1;
-    height: 10px;
-    background: var(--surface2);
-    border-radius: 5px;
-    overflow: hidden;
-  }
-  .total-bar-fill {
-    height: 100%;
-    border-radius: 5px;
-    transition: width 0.6s ease;
-  }
-  .total-bar-val { width: 70px; text-align: right; font-family: 'Rajdhani', sans-serif; font-size: 14px; color: var(--text); }
-
-  /* ── 반응형 ── */
-  @media (max-width: 1100px) {
-    .summary-cards { grid-template-columns: repeat(2, 1fr); }
-  }
-  @media (max-width: 700px) {
-    header, main { padding: 16px 20px; }
-    .summary-cards { grid-template-columns: 1fr 1fr; }
-    .api-input-group input { width: 150px; }
-  }
+:root {
+  --bg:#080c10;--surface:#0d1219;--surface2:#131b24;--border:#1e2d3d;
+  --gold:#f7b731;--gold-dim:#c9922a;--cyan:#29d6e0;--red:#ff4d4d;
+  --green:#2ecc71;--orange:#ff9500;--text:#e8edf3;--muted:#5a7089;--dim:#8aa0b4;
+  --tiktok:#25f4ee;--insta:#e1306c;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(247,183,49,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(247,183,49,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+/* ── Header ── */
+header{position:relative;z-index:10;padding:16px 32px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(247,183,49,.05) 0%,transparent 100%);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{width:34px;height:34px;background:var(--gold);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;color:#000;flex-shrink:0}
+.hdr-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--gold);letter-spacing:2px}
+.hdr-sub{font-size:10px;color:var(--muted);margin-top:1px;letter-spacing:1px}
+.hdr-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-left:auto}
+.api-wrap{display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:6px;overflow:hidden;height:34px}
+.api-lbl{padding:0 10px;font-size:9px;color:var(--muted);letter-spacing:1px;border-right:1px solid var(--border);white-space:nowrap;display:flex;align-items:center}
+.api-inp{background:transparent;border:none;outline:none;color:var(--text);font-size:11px;padding:0 10px;width:180px;font-family:monospace}
+.sel{height:34px;padding:0 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:12px}
+.date-inp{height:34px;padding:0 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);width:120px;color-scheme:dark;font-size:12px}
+.btn{height:34px;padding:0 14px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:all .15s}
+.btn:hover{background:var(--surface2)}
+.btn.pri{background:var(--gold);color:#000;border-color:var(--gold);font-weight:500}
+.btn.pri:hover{background:#ffc842}
+.btn.pri:disabled{opacity:.5;cursor:not-allowed}
+#apiKeySaved{font-size:10px}
+#updateTime{font-size:10px;color:var(--muted);white-space:nowrap}
+
+/* ── Tabs ── */
+main{position:relative;z-index:1;padding:24px 32px;max-width:1600px;margin:0 auto}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:24px}
+.tab{padding:10px 22px;font-size:13px;font-weight:500;color:var(--muted);background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-1px;display:flex;align-items:center;gap:6px;transition:all .15s}
+.tab:hover{color:var(--dim)}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.tab-bdg{background:rgba(247,183,49,.15);color:var(--gold);font-size:9px;padding:1px 5px;border-radius:10px;font-weight:700}
+.panel{display:none}.panel.active{display:block}
+
+/* ── Row 1: Summary Cards ── */
+.row1{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.scard{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;position:relative;overflow:hidden}
+.scard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.scard.gold::before{background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.scard.cyan::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+.scard.green::before{background:linear-gradient(90deg,transparent,var(--green),transparent)}
+.scard .lbl{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+.scard .val{font-family:'Rajdhani',sans-serif;font-size:34px;font-weight:700;line-height:1}
+.scard.gold .val{color:var(--gold)}.scard.cyan .val{color:var(--cyan)}.scard.green .val{color:var(--green)}
+.scard .sub{font-size:10px;color:var(--muted);margin-top:4px}
+
+/* ── Row 2: Daily Trend Chart ── */
+.row2{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:20px}
+.row2-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.sec-title{font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase}
+.ftab{background:transparent;border:1px solid var(--border);border-radius:20px;color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:10px;padding:3px 10px;cursor:pointer;transition:all .15s}
+.ftab:hover{border-color:var(--gold-dim);color:var(--dim)}
+.ftab.active{background:rgba(247,183,49,.1);border-color:var(--gold-dim);color:var(--gold);font-weight:500}
+.chart-legend{display:flex;gap:12px;flex-wrap:wrap;margin-left:auto;font-size:10px;color:var(--muted);align-items:center}
+.chart-wrap{position:relative;height:180px}
+.chart-xlabels{display:flex;justify-content:space-between;margin-top:5px;font-size:9px;color:var(--muted);padding:0 2px}
+
+/* ── Row 3: Top/Bottom Partners ── */
+.row3{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.rank-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
+.rank-box .box-title{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.rank-box.top .box-title{color:var(--green)}
+.rank-box.bot .box-title{color:var(--red)}
+.rank-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(30,45,61,.5)}
+.rank-item:last-child{border-bottom:none}
+.rank-num{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;width:22px;flex-shrink:0}
+.rank-box.top .rank-num{color:var(--gold)}
+.rank-box.bot .rank-num{color:var(--red)}
+.rank-av{width:28px;height:28px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--gold);flex-shrink:0;overflow:hidden}
+.rank-av img{width:100%;height:100%;object-fit:cover}
+.rank-info{flex:1;min-width:0}
+.rank-name{font-size:13px;font-weight:500}
+.rank-handle{font-size:10px;color:var(--muted)}
+.rank-metrics{display:flex;gap:12px;font-size:11px;margin-top:2px}
+.rank-m{display:flex;flex-direction:column;align-items:flex-end}
+.rank-m .mv{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700}
+.rank-m .ml{font-size:9px;color:var(--muted);letter-spacing:.5px}
+.warn-badge{background:rgba(255,77,77,.12);color:var(--red);font-size:9px;padding:1px 6px;border-radius:10px;font-weight:500;margin-left:auto}
+
+/* ── Row 4: Notice ── */
+.row4{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:20px}
+.notice-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-top:12px}
+.notice-item{background:var(--surface2);border-radius:8px;padding:10px 14px;border-left:3px solid var(--border);font-size:12px;line-height:1.6}
+.notice-item.amb{border-left-color:var(--orange)}
+.notice-item.inactive{border-left-color:var(--red)}
+.notice-item.top{border-left-color:var(--gold)}
+.notice-item .ni-title{font-weight:500;font-size:11px;margin-bottom:3px}
+.notice-item.amb .ni-title{color:var(--orange)}
+.notice-item.inactive .ni-title{color:var(--red)}
+.notice-item.top .ni-title{color:var(--gold)}
+.notice-empty{color:var(--muted);font-size:12px;padding:12px 0}
+
+/* ── Row 5: Detail Table ── */
+.row5-ctrl{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.sbox{display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:0 10px;gap:6px}
+.sbox input{background:transparent;border:none;outline:none;color:var(--text);font-size:12px;height:32px;width:150px;font-family:'Noto Sans KR',sans-serif}
+.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{background:var(--surface2);color:var(--muted);font-size:9px;font-weight:500;letter-spacing:1.2px;text-transform:uppercase;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer}
+th:hover{color:var(--text)}
+td{padding:11px 14px;border-bottom:1px solid rgba(30,45,61,.5);font-size:12px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.drow:hover td{background:rgba(247,183,49,.02)}
+.ch-cell{display:flex;align-items:center;gap:9px}
+.av{width:28px;height:28px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--gold);overflow:hidden;flex-shrink:0}
+.av img{width:100%;height:100%;object-fit:cover}
+.ch-name{font-weight:500;font-size:12px}
+.ch-handle{font-size:10px;color:var(--muted)}
+.num{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:500}
+.num.gold{color:var(--gold)}.num.cyan{color:var(--cyan)}
+.pill{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:500}
+.pill.good{background:rgba(46,204,113,.12);color:var(--green)}
+.pill.warn{background:rgba(255,77,77,.12);color:var(--red)}
+.pill.ok{background:rgba(247,183,49,.12);color:var(--gold)}
+.pill.sh{background:rgba(41,214,224,.1);color:var(--cyan);border:1px solid rgba(41,214,224,.2)}
+.pill.lg{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.plat-pill{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:500}
+.plat-pill.tt{background:rgba(37,244,238,.1);color:var(--tiktok);border:1px solid rgba(37,244,238,.2)}
+.plat-pill.ig{background:rgba(225,48,108,.1);color:var(--insta);border:1px solid rgba(225,48,108,.2)}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;padding:10px 14px 10px 46px}
+.vcard{display:flex;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px;text-decoration:none;transition:border-color .15s}
+.vcard:hover{border-color:var(--gold-dim)}
+.vthumb{width:68px;height:46px;border-radius:3px;background:var(--surface2);flex-shrink:0;overflow:hidden;position:relative}
+.vthumb img{width:100%;height:100%;object-fit:cover}
+.vdot{position:absolute;top:2px;right:2px;background:var(--gold);color:#000;font-size:6px;font-weight:700;padding:1px 3px;border-radius:2px}
+.vmeta{flex:1;min-width:0}
+.vtitle{font-size:10px;color:var(--text);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:2px 0}
+.vstats{display:flex;gap:6px;font-size:9px;color:var(--muted)}
+.tybdg{font-size:8px;font-weight:500;padding:1px 4px;border-radius:2px}
+.tybdg.sh{background:rgba(41,214,224,.1);color:var(--cyan);border:1px solid rgba(41,214,224,.2)}
+.tybdg.lg{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+
+/* ── Channel Setup ── */
+.ch-setup{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:14px}
+.chtags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.chtag{display:flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:3px 8px;font-size:10px;color:var(--muted)}
+.chtag .dot{width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.chtag .rm{cursor:pointer;margin-left:2px;transition:color .15s}.chtag .rm:hover{color:var(--red)}
+.add-row{display:flex;gap:6px;flex-wrap:wrap}
+.add-inp{background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:11px;padding:0 10px;height:30px;outline:none;width:140px}
+
+/* ── SNS Setup ── */
+.sns-setup{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:14px}
+.sns-help{margin-top:10px;padding:8px 12px;background:var(--surface);border:1px solid rgba(41,214,224,.2);border-radius:6px;font-size:10px;color:var(--muted);line-height:1.8}
+.sns-help b{color:var(--cyan)}
+.sheets-status{font-size:10px;padding:2px 8px;border-radius:20px}
+.sheets-status.ok{background:rgba(46,204,113,.1);color:var(--green)}
+.sheets-status.error{background:rgba(255,77,77,.1);color:var(--red)}
+.sheets-status.loading{background:rgba(247,183,49,.1);color:var(--gold)}
+
+/* ── Loading / Toast ── */
+.loading{display:none;align-items:center;gap:10px;padding:16px;color:var(--muted);font-size:12px}
+.spin{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0}
+@keyframes sp{to{transform:rotate(360deg)}}
+.empty{padding:32px;text-align:center;color:var(--muted);font-size:12px;line-height:1.8}
+.toast{position:fixed;bottom:14px;right:14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:12px;color:var(--text);z-index:999;transform:translateY(16px);opacity:0;transition:all .2s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-color:rgba(46,204,113,.4);color:var(--green)}
+.toast.err{border-color:rgba(255,77,77,.4);color:var(--red)}
+@media(max-width:900px){.row1{grid-template-columns:repeat(2,1fr)}.row3{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-
-<!-- 로딩 오버레이 -->
-<div class="loading-overlay" id="loadingOverlay">
-  <div class="spinner"></div>
-  <div class="loading-text">데이터 수집 중...</div>
-</div>
-
-<!-- 토스트 -->
-<div class="toast" id="toast"></div>
-
-<!-- 헤더 -->
 <header>
-  <div class="header-left">
-    <div class="logo-mark">P</div>
-    <h1>
-      PARTNER MONITOR
-      <span>PUBG MOBILE KR · 파트너 성과 현황판</span>
-    </h1>
-  </div>
-  <div class="header-right">
-    <div class="api-input-group">
-      <label>API KEY</label>
-      <input type="password" id="apiKeyInput" placeholder="YouTube Data API v3 키 입력" autocomplete="off" oninput="saveApiKey()">
+  <div class="logo">P</div>
+  <div><div class="hdr-title">PARTNER MONITOR</div><div class="hdr-sub">PUBG MOBILE KR · 파트너 성과 현황판 (PUBGM 콘텐츠 전용)</div></div>
+  <div class="hdr-controls">
+    <div class="api-wrap">
+      <span class="api-lbl">API KEY</span>
+      <input type="password" class="api-inp" id="apiKeyInput" placeholder="YouTube Data API v3 키" autocomplete="off" oninput="saveApiKey()">
     </div>
-    <span id="apiKeySaved" style="font-size:11px;color:var(--text-muted)"></span>
-    </div>
-
-    <!-- 기간 선택 -->
-    <div class="date-range-group">
-      <select class="sort-select" id="periodPreset" onchange="applyPreset()" style="height:36px;width:110px">
+    <span id="apiKeySaved" style="color:var(--green)"></span>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+      <select class="sel" id="periodPreset" onchange="applyPreset()" style="width:96px">
         <option value="7">최근 7일</option>
         <option value="14">최근 14일</option>
         <option value="30" selected>최근 30일</option>
@@ -1001,1699 +192,774 @@
         <option value="365">최근 1년</option>
         <option value="custom">직접 입력</option>
       </select>
-      <div class="date-inputs" id="dateInputs" style="display:none">
-        <input type="date" id="dateFrom" class="date-input">
-        <span style="color:var(--text-muted);font-size:12px">~</span>
-        <input type="date" id="dateTo" class="date-input">
+      <div id="dateInputs" style="display:none;align-items:center;gap:4px">
+        <input type="date" class="date-inp" id="dateFrom">
+        <span style="font-size:11px;color:var(--muted)">~</span>
+        <input type="date" class="date-inp" id="dateTo">
       </div>
     </div>
-
-    <button class="btn btn-primary" onclick="fetchAllData()" id="fetchBtn">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-      조회
-    </button>
-    <div class="update-time" id="updateTime">마지막 업데이트: —</div>
-    <div class="auto-refresh-row">
-      <label class="toggle-label">
-        <input type="checkbox" id="autoRefreshToggle" onchange="toggleAutoRefresh()">
-        <span class="toggle-pill"></span>
-        자동 (30분)
-      </label>
-    </div>
+    <button class="btn pri" id="fetchBtn" onclick="fetchAll()">조회</button>
+    <span id="updateTime"></span>
   </div>
 </header>
 
 <main>
+<div class="tabs">
+  <button class="tab active" onclick="stab('yt',this)">▶ YouTube <span class="tab-bdg" id="ytBdg">—</span></button>
+  <button class="tab" onclick="stab('sns',this)">TikTok · Instagram <span class="tab-bdg" id="snsBdg">—</span></button>
+  <button class="tab" onclick="stab('int',this)">통합 현황</button>
+</div>
 
-  <!-- 메인 탭 네비게이션 -->
-  <div class="main-tabs">
-    <button class="main-tab active" onclick="switchMainTab('youtube', this)">
-      <span class="platform-dot" style="background:#ff4444"></span>
-      YouTube
-      <span class="tab-badge" id="ytBadge">—</span>
-    </button>
-    <button class="main-tab" onclick="switchMainTab('sns', this)">
-      <span class="platform-dot" style="background:linear-gradient(135deg,#29d6e0,#e1306c)"></span>
-      TikTok · Instagram
-      <span class="tab-badge" id="snsBadge">—</span>
-    </button>
-    <button class="main-tab" onclick="switchMainTab('integrated', this)">
-      <span class="platform-dot" style="background:var(--gold)"></span>
-      통합 현황
-    </button>
+<!-- ══════════════ YouTube 탭 ══════════════ -->
+<div class="panel active" id="pyt">
+  <!-- Row 1 -->
+  <div class="row1">
+    <div class="scard gold"><div class="lbl">총 파트너 수</div><div class="val" id="ytP">—</div><div class="sub">모니터링 채널</div></div>
+    <div class="scard cyan"><div class="lbl">영상 업로드 수</div><div class="val" id="ytU">—</div><div class="sub" id="ytUsub">PUBGM 관련 영상</div></div>
+    <div class="scard green"><div class="lbl">총 조회수 합계</div><div class="val" id="ytV">—</div><div class="sub">수집 영상 기준</div></div>
   </div>
-
-  <!-- ════════════════════════════════════
-       탭 1: YouTube (기존 콘텐츠)
-  ════════════════════════════════════ -->
-  <div class="tab-panel active" id="panel-youtube">
-  <div class="summary-cards">
-    <div class="card gold">
-      <div class="card-label">총 파트너 수</div>
-      <div class="card-value" id="sumPartners">—</div>
-      <div class="card-sub">모니터링 채널</div>
+  <!-- Row 2 -->
+  <div class="row2">
+    <div class="row2-header">
+      <span class="sec-title">일일 트렌드</span>
+      <button class="ftab active" onclick="switchDM('uploads',this,'yt')">업로드 수</button>
+      <button class="ftab" onclick="switchDM('views',this,'yt')">조회수</button>
+      <div class="chart-legend" id="ytLegend"></div>
     </div>
-    <div class="card cyan">
-      <div class="card-label">총 조회수 합계</div>
-      <div class="card-value" id="sumViews">—</div>
-      <div class="card-sub">최근 수집 영상 기준</div>
+    <div class="chart-wrap"><canvas id="ytChart"></canvas></div>
+    <div class="chart-xlabels" id="ytXLabels"></div>
+  </div>
+  <!-- Row 3 -->
+  <div class="row3">
+    <div class="rank-box top">
+      <div class="box-title">🏆 활발한 파트너 Top 3</div>
+      <div id="ytTop3"></div>
     </div>
-    <div class="card green">
-      <div class="card-label">이번 주 업로드</div>
-      <div class="card-value" id="sumWeekly">—</div>
-      <div class="card-sub">PUBGM 관련 영상</div>
-    </div>
-    <div class="card red">
-      <div class="card-label">활동 없음 파트너</div>
-      <div class="card-value" id="sumInactive">—</div>
-      <div class="card-sub">주간 업로드 0건</div>
+    <div class="rank-box bot">
+      <div class="box-title">⚠ 활동 주의 파트너 Top 3</div>
+      <div id="ytBot3"></div>
     </div>
   </div>
-
-  <!-- 확인 필요 알림 배너 -->
-  <div id="ambiguousBanner" style="display:none; background:rgba(255,149,0,0.08); border:1px solid rgba(255,149,0,0.3); border-radius:10px; padding:14px 20px; margin-bottom:20px; display:none; align-items:center; gap:12px;">
-    <span style="font-size:18px">⚠</span>
-    <div>
-      <div style="font-size:13px; color:#ff9500; font-weight:500;">수동 확인 필요 영상 <span id="ambiguousCount" style="font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:700;">0</span>건</div>
-      <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">모바일·PC 키워드가 동시에 감지된 영상입니다. 채널을 펼쳐 <span style="color:#ff9500">주황색 카드</span>를 직접 확인해주세요.</div>
+  <!-- Row 4 -->
+  <div class="row4">
+    <div class="sec-title" style="color:var(--orange)">📋 특이사항 요약</div>
+    <div id="ytNotices"></div>
+  </div>
+  <!-- Row 5 -->
+  <div class="ch-setup">
+    <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">모니터링 파트너 채널</div>
+    <div class="chtags" id="chtags"></div>
+    <div class="add-row">
+      <input class="add-inp" id="aname" placeholder="채널 이름">
+      <input class="add-inp" id="ahandle" placeholder="@핸들">
+      <button class="btn" onclick="addCh()">+ 추가</button>
     </div>
   </div>
+  <div class="row5-ctrl">
+    <div class="sbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input placeholder="채널명 검색" id="ytSrch" oninput="rTbl()"></div>
+    <select class="sel" id="ytSort" onchange="rTbl()"><option value="weekly">정렬: 업로드 수</option><option value="views">정렬: 조회수</option><option value="latest">정렬: 최근 업로드</option></select>
+    <button class="btn" style="margin-left:auto" onclick="exCSV()">CSV 내보내기</button>
+  </div>
+  <div class="loading" id="ytLd"><div class="spin"></div><span id="ldMsg">수집 중...</span></div>
+  <div class="tbl-wrap"><table><thead><tr>
+    <th>채널</th><th onclick="sBy('subscribers')">구독자</th>
+    <th onclick="sBy('weekly')">PUBGM 업로드 ↓</th><th>동영상/Shorts</th>
+    <th onclick="sBy('views')">조회수</th><th onclick="sBy('likes')">좋아요</th>
+    <th onclick="sBy('comments')">댓글</th><th onclick="sBy('latest')">최근 업로드</th><th></th>
+  </tr></thead>
+  <tbody id="ytBody"><tr><td colspan="9"><div class="empty">API 키 입력 후 조회 버튼을 클릭하세요.</div></td></tr></tbody>
+  </table></div>
+</div>
 
-  <!-- 일자별 트렌드 차트 -->
-  <div id="dailyTrendSection" style="display:none; margin-bottom:24px;">
-    <div class="section-title" style="margin-bottom:16px">일자별 트렌드</div>
-    <div style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:20px 24px;">
-      <!-- 지표 탭 + 범례 -->
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
-        <button class="format-tab active" id="dailyTabUpload" onclick="switchDailyMetric('uploads',this)">업로드 수</button>
-        <button class="format-tab" id="dailyTabViews" onclick="switchDailyMetric('views',this)">조회수</button>
-        <div style="margin-left:auto; display:flex; gap:14px; font-size:11px; color:var(--text-muted); align-items:center; flex-wrap:wrap;" id="dailyLegend"></div>
-      </div>
-      <!-- 캔버스 -->
-      <div style="position:relative;">
-        <canvas id="dailyTrendCanvas" height="200"></canvas>
-      </div>
-      <!-- X축 날짜 레이블 -->
-      <div id="dailyXLabels" style="display:flex; justify-content:space-between; margin-top:6px; font-size:10px; color:var(--text-muted); padding:0 2px;"></div>
+<!-- ══════════════ TikTok·Instagram 탭 ══════════════ -->
+<div class="panel" id="psns">
+  <!-- Row 1 -->
+  <div class="row1">
+    <div class="scard gold"><div class="lbl">총 파트너 수</div><div class="val" id="snsP">—</div><div class="sub">TikTok + Instagram</div></div>
+    <div class="scard cyan"><div class="lbl">영상 업로드 수</div><div class="val" id="snsU">—</div><div class="sub">콘텐츠 건수</div></div>
+    <div class="scard green"><div class="lbl">총 조회수 합계</div><div class="val" id="snsV">—</div><div class="sub">TikTok + Instagram</div></div>
+  </div>
+  <!-- Row 2 -->
+  <div class="row2">
+    <div class="row2-header">
+      <span class="sec-title">일일 트렌드</span>
+      <button class="ftab active" onclick="switchDM('uploads',this,'sns')">업로드 수</button>
+      <button class="ftab" onclick="switchDM('views',this,'sns')">조회수</button>
+      <div class="chart-legend" id="snsLegend"></div>
+    </div>
+    <div class="chart-wrap"><canvas id="snsChart"></canvas></div>
+    <div class="chart-xlabels" id="snsXLabels"></div>
+  </div>
+  <!-- Row 3 -->
+  <div class="row3">
+    <div class="rank-box top">
+      <div class="box-title">🏆 활발한 파트너 Top 3</div>
+      <div id="snsTop3"></div>
+    </div>
+    <div class="rank-box bot">
+      <div class="box-title">⚠ 활동 주의 파트너 Top 3</div>
+      <div id="snsBot3"></div>
     </div>
   </div>
-
-  <!-- YoY / MoM / WoW 시각화 -->
-  <div id="trendSection" style="display:none; margin-bottom:28px;">
-    <div class="section-title">기간 비교 분석</div>
-
-    <!-- 지표 탭 -->
-    <div style="display:flex; gap:8px; margin-bottom:16px; align-items:center;">
-      <button class="format-tab active" onclick="switchTrendMetric('uploads', this)">업로드 수</button>
-      <button class="format-tab" onclick="switchTrendMetric('views', this)">조회수</button>
-      <span style="margin-left:auto; font-size:11px; color:var(--text-muted)" id="trendNote"></span>
+  <!-- Row 4 -->
+  <div class="row4">
+    <div class="sec-title" style="color:var(--orange)">📋 특이사항 요약</div>
+    <div id="snsNotices"></div>
+  </div>
+  <!-- Row 5 -->
+  <div class="sns-setup">
+    <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Google Sheets 자동 연동</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn pri" onclick="loadSheetsData()" id="snsLoadBtn">시트 데이터 불러오기</button>
+      <span class="sheets-status" id="sheetsStatus"></span>
+      <span id="snsLastUpdate" style="font-size:10px;color:var(--muted);margin-left:auto"></span>
     </div>
-
-    <!-- WoW / MoM / YoY 카드 3개 -->
-    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px;">
-      <!-- WoW -->
-      <div class="card" style="position:relative; overflow:hidden;">
-        <div style="position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--cyan),transparent)"></div>
-        <div class="card-label">WoW <span style="font-weight:300;letter-spacing:0">주간 비교</span></div>
-        <div style="display:flex; align-items:flex-end; gap:10px; margin:8px 0 4px;">
-          <div style="font-family:'Rajdhani',sans-serif; font-size:32px; font-weight:700; color:var(--text)" id="wowCurrent">—</div>
-          <div style="font-size:13px; color:var(--text-muted); margin-bottom:4px" id="wowPrev">vs —</div>
-        </div>
-        <div id="wowDelta" style="font-size:13px; font-weight:500; margin-bottom:12px">—</div>
-        <canvas id="wowChart" height="52" style="width:100%"></canvas>
-        <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:10px; color:var(--text-muted)">
-          <span id="wowLabelPrev">이전 주</span><span id="wowLabelCurr">이번 주</span>
-        </div>
-      </div>
-
-      <!-- MoM -->
-      <div class="card" style="position:relative; overflow:hidden;">
-        <div style="position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--gold),transparent)"></div>
-        <div class="card-label">MoM <span style="font-weight:300;letter-spacing:0">월간 비교</span></div>
-        <div style="display:flex; align-items:flex-end; gap:10px; margin:8px 0 4px;">
-          <div style="font-family:'Rajdhani',sans-serif; font-size:32px; font-weight:700; color:var(--text)" id="momCurrent">—</div>
-          <div style="font-size:13px; color:var(--text-muted); margin-bottom:4px" id="momPrev">vs —</div>
-        </div>
-        <div id="momDelta" style="font-size:13px; font-weight:500; margin-bottom:12px">—</div>
-        <canvas id="momChart" height="52" style="width:100%"></canvas>
-        <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:10px; color:var(--text-muted)">
-          <span id="momLabelPrev">전월</span><span id="momLabelCurr">당월</span>
-        </div>
-      </div>
-
-      <!-- YoY -->
-      <div class="card" style="position:relative; overflow:hidden;">
-        <div style="position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--green),transparent)"></div>
-        <div class="card-label">YoY <span style="font-weight:300;letter-spacing:0">연간 비교</span></div>
-        <div style="display:flex; align-items:flex-end; gap:10px; margin:8px 0 4px;">
-          <div style="font-family:'Rajdhani',sans-serif; font-size:32px; font-weight:700; color:var(--text)" id="yoyCurrent">—</div>
-          <div style="font-size:13px; color:var(--text-muted); margin-bottom:4px" id="yoyPrev">vs —</div>
-        </div>
-        <div id="yoyDelta" style="font-size:13px; font-weight:500; margin-bottom:12px">—</div>
-        <canvas id="yoyChart" height="52" style="width:100%"></canvas>
-        <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:10px; color:var(--text-muted)">
-          <span id="yoyLabelPrev">전년 동기</span><span id="yoyLabelCurr">올해</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 파트너별 비교 바 차트 -->
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <div style="font-size:12px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase" id="barChartTitle">파트너별 업로드 수 비교</div>
-        <div style="display:flex; gap:12px; font-size:11px;">
-          <span style="display:flex; align-items:center; gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:rgba(247,183,49,0.7);display:inline-block"></span>현재 기간</span>
-          <span style="display:flex; align-items:center; gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:rgba(90,112,137,0.5);display:inline-block"></span>비교 기간 (WoW)</span>
-        </div>
-      </div>
-      <canvas id="barChart" height="180"></canvas>
+    <div class="sns-help">
+      <b>연동된 시트 열 구조:</b> 플랫폼 / 콘텐츠 링크 / 날짜 / 조회수 / 파트너명
     </div>
   </div>
+  <div class="row5-ctrl">
+    <button class="ftab active" onclick="fSns('all',this)">전체</button>
+    <button class="ftab" onclick="fSns('tiktok',this)">🎵 TikTok</button>
+    <button class="ftab" onclick="fSns('instagram',this)">📸 Instagram</button>
+    <div class="sbox" style="margin-left:auto"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input placeholder="파트너 검색" id="snsSrch" oninput="rSns()"></div>
+  </div>
+  <div class="tbl-wrap"><table><thead><tr>
+    <th>파트너명</th><th>플랫폼</th><th>콘텐츠 수</th><th>조회수</th><th>최근 업로드</th><th>콘텐츠 링크</th>
+  </tr></thead>
+  <tbody id="snsBody"><tr><td colspan="6"><div class="empty">시트 데이터 불러오기 버튼을 클릭해주세요.</div></td></tr></tbody>
+  </table></div>
+</div>
 
-  <!-- 채널 목록 설정 -->
-  <div class="channel-setup">
-    <div class="section-title">모니터링 파트너 채널</div>
-    <div class="channel-tags" id="channelTags"></div>
-    <div class="add-channel-row">
-      <input type="text" class="add-channel-input" id="newChannelName" placeholder="채널 이름 (예: 상책이)">
-      <input type="text" class="add-channel-input" id="newChannelHandle" placeholder="핸들 (예: @sangcheck2)">
-      <button class="btn btn-secondary" onclick="addChannel()">+ 추가</button>
+<!-- ══════════════ 통합 현황 탭 ══════════════ -->
+<div class="panel" id="pint">
+  <!-- Row 1 -->
+  <div class="row1">
+    <div class="scard gold"><div class="lbl">총 파트너 수</div><div class="val" id="intP">—</div><div class="sub">YT + TT + IG</div></div>
+    <div class="scard cyan"><div class="lbl">영상 업로드 수</div><div class="val" id="intU">—</div><div class="sub">전 플랫폼 합산</div></div>
+    <div class="scard green"><div class="lbl">총 조회수 합계</div><div class="val" id="intV">—</div><div class="sub">전 플랫폼 합산</div></div>
+  </div>
+  <!-- Row 2 -->
+  <div class="row2">
+    <div class="row2-header">
+      <span class="sec-title">일일 트렌드 (전 플랫폼)</span>
+      <button class="ftab active" onclick="switchDM('uploads',this,'int')">업로드 수</button>
+      <button class="ftab" onclick="switchDM('views',this,'int')">조회수</button>
+      <div class="chart-legend" id="intLegend"></div>
+    </div>
+    <div class="chart-wrap"><canvas id="intChart"></canvas></div>
+    <div class="chart-xlabels" id="intXLabels"></div>
+  </div>
+  <!-- Row 3 -->
+  <div class="row3">
+    <div class="rank-box top">
+      <div class="box-title">🏆 활발한 파트너 Top 3</div>
+      <div id="intTop3"></div>
+    </div>
+    <div class="rank-box bot">
+      <div class="box-title">⚠ 활동 주의 파트너 Top 3</div>
+      <div id="intBot3"></div>
     </div>
   </div>
-
-  <!-- 필터 컨트롤 -->
-  <div class="controls">
-    <div class="search-box">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path></svg>
-      <input type="text" placeholder="채널명 검색" id="searchInput" oninput="filterTable()">
-    </div>
-
-    <select class="sort-select" id="sortSelect" onchange="sortTable()">
-      <option value="weekly">정렬: 주간 업로드 수</option>
-      <option value="views">정렬: 총 조회수</option>
-      <option value="latest">정렬: 최근 업로드일</option>
-      <option value="name">정렬: 채널명</option>
-    </select>
-
-    <label class="toggle-label">
-      <input type="checkbox" id="pubgmFilter" onchange="filterTable()">
-      <span class="toggle-pill"></span>
-      PUBGM 관련 영상만
-    </label>
-
-    <div class="controls-right">
-      <button class="btn btn-secondary" onclick="exportCSV()">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-        CSV 내보내기
-      </button>
-    </div>
+  <!-- Row 4 -->
+  <div class="row4">
+    <div class="sec-title" style="color:var(--orange)">📋 특이사항 요약</div>
+    <div id="intNotices"></div>
   </div>
-
-  <!-- 파트너 테이블 -->
-  <div class="table-wrap">
-    <table class="partner-table" id="partnerTable">
-      <thead>
-        <tr>
-          <th>채널</th>
-          <th class="sortable" data-sort="subscribers" onclick="sortBy('subscribers')">구독자 <span class="sort-icon">↕</span></th>
-          <th class="sortable active-sort" data-sort="weekly" onclick="sortBy('weekly')">주간 PUBGM 업로드 <span class="sort-icon">↓</span></th>
-          <th style="font-size:9px; color:var(--text-muted); letter-spacing:1px; padding-left:0">동영상 / Shorts</th>
-          <th class="sortable" data-sort="views" onclick="sortBy('views')">조회수 합계 <span class="sort-icon">↕</span></th>
-          <th class="sortable" data-sort="likes" onclick="sortBy('likes')">좋아요 합계 <span class="sort-icon">↕</span></th>
-          <th class="sortable" data-sort="comments" onclick="sortBy('comments')">댓글 합계 <span class="sort-icon">↕</span></th>
-          <th class="sortable" data-sort="latest" onclick="sortBy('latest')">최근 업로드 <span class="sort-icon">↕</span></th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="tableBody">
-        <tr><td colspan="9"><div class="empty-state"><div class="icon">📡</div><p>API 키를 입력하고 [조회] 버튼을 클릭하면<br>파트너 채널 성과 데이터를 불러옵니다.</p></div></td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  </div><!-- /panel-youtube -->
-
-  <!-- ════════════════════════════════════
-       탭 2: TikTok · Instagram
-  ════════════════════════════════════ -->
-  <div class="tab-panel" id="panel-sns">
-
-    <!-- Sheets 자동 연동 -->
-    <div class="sheets-setup">
-      <div class="section-title">Google Sheets 자동 연동</div>
-      <div class="setup-row">
-        <button class="btn btn-primary" onclick="loadSheetsData()" id="snsLoadBtn">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-          시트 데이터 불러오기
-        </button>
-        <span class="sheets-status" id="sheetsStatus"></span>
-        <span id="snsLastUpdate" style="font-size:11px;color:var(--text-muted);margin-left:auto"></span>
-      </div>
-      <div class="sheets-help">
-        <b>📋 연동된 스프레드시트</b><br>
-        시트 열 구조: <b>플랫폼 / 콘텐츠 링크 / 날짜 / 조회수 / 파트너명</b><br>
-        [시트 데이터 불러오기] 버튼을 클릭하면 최신 데이터를 자동으로 가져옵니다.
-      </div>
-    </div>
-
-    <!-- 플랫폼 필터 -->
-    <div class="controls" style="margin-bottom:16px">
-      <div style="font-size:12px; color:var(--text-muted)">플랫폼 필터</div>
-      <button class="format-tab active" onclick="filterSns('all', this)">전체</button>
-      <button class="format-tab" onclick="filterSns('tiktok', this)">🎵 TikTok</button>
-      <button class="format-tab" onclick="filterSns('instagram', this)">📸 Instagram</button>
-      <div style="margin-left:auto">
-        <div class="search-box">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-          <input type="text" placeholder="파트너 닉네임 검색" id="snsSearchInput" oninput="renderSnsTable()">
-        </div>
-      </div>
-    </div>
-
-    <!-- SNS 데이터 테이블 -->
-    <div class="sns-table-wrap">
-      <table class="sns-table">
-        <thead>
-          <tr>
-            <th>파트너명</th>
-            <th>플랫폼</th>
-            <th>콘텐츠 링크</th>
-            <th>날짜</th>
-            <th>조회수</th>
-            <th>콘텐츠 수</th>
-          </tr>
-        </thead>
-        <tbody id="snsTableBody">
-          <tr><td colspan="6"><div class="empty-state"><div class="icon">📊</div><p>[시트 데이터 불러오기] 버튼을 클릭하면<br>최신 데이터를 자동으로 가져옵니다.</p></div></td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- SNS 요약 카드 -->
-    <div class="summary-cards" id="snsSummaryCards" style="display:none">
-      <div class="card cyan">
-        <div class="card-label">TikTok 총 조회수</div>
-        <div class="card-value" id="snsTtViews">—</div>
-        <div class="card-sub" id="snsTtCount">0건</div>
-      </div>
-      <div class="card" style="--accent:#e1306c">
-        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#e1306c,transparent)"></div>
-        <div class="card-label">Instagram 총 조회수</div>
-        <div class="card-value" id="snsIgViews" style="color:#e1306c">—</div>
-        <div class="card-sub" id="snsIgCount">0건</div>
-      </div>
-      <div class="card green">
-        <div class="card-label">총 콘텐츠 수</div>
-        <div class="card-value" id="snsPubgmCount">—</div>
-        <div class="card-sub">TikTok + Instagram</div>
-      </div>
-      <div class="card gold">
-        <div class="card-label">참여 파트너 수</div>
-        <div class="card-value" id="snsTotalCount">—</div>
-        <div class="card-sub">고유 파트너 합산</div>
-      </div>
-    </div>
-
-  </div><!-- /panel-sns -->
-
-  <!-- ════════════════════════════════════
-       탭 3: 통합 현황
-  ════════════════════════════════════ -->
-  <div class="tab-panel" id="panel-integrated">
-
-    <div class="empty-state" id="integratedEmpty" style="padding:60px 0">
-      <div class="icon">🔗</div>
-      <p>YouTube 조회와 TikTok·Instagram 시트 연동을<br>모두 완료하면 통합 현황이 표시됩니다.</p>
-    </div>
-
-    <div id="integratedContent" style="display:none">
-
-      <!-- 플랫폼별 요약 카드 -->
-      <div class="integrated-grid">
-        <!-- YouTube -->
-        <div class="integrated-card">
-          <div class="plat-header">
-            <span class="plat-icon yt">▶</span> YouTube
-          </div>
-          <div class="integrated-stat">
-            <span class="label">파트너 수</span>
-            <span class="value" id="int-yt-partners">—</span>
-          </div>
-          <div class="integrated-stat">
-            <span class="label">총 조회수</span>
-            <span class="value" id="int-yt-views">—</span>
-          </div>
-          <div class="integrated-stat">
-            <span class="label">PUBGM 업로드</span>
-            <span class="value" id="int-yt-uploads">—</span>
-          </div>
-        </div>
-        <!-- TikTok -->
-        <div class="integrated-card">
-          <div class="plat-header">
-            <span class="plat-icon tt">🎵</span> TikTok
-          </div>
-          <div class="integrated-stat">
-            <span class="label">제출 건수</span>
-            <span class="value" id="int-tt-count">—</span>
-          </div>
-          <div class="integrated-stat">
-            <span class="label">총 조회수</span>
-            <span class="value" id="int-tt-views">—</span>
-          </div>
-          <div class="integrated-stat">
-            <span class="label">PUBGM 콘텐츠</span>
-            <span class="value" id="int-tt-pubgm">—</span>
-          </div>
-        </div>
-        <!-- Instagram -->
-        <div class="integrated-card">
-          <div class="plat-header">
-            <span class="plat-icon ig">📸</span> Instagram
-          </div>
-          <div class="integrated-stat">
-            <span class="label">제출 건수</span>
-            <span class="value" id="int-ig-count">—</span>
-          </div>
-          <div class="integrated-stat">
-            <span class="label">총 조회수</span>
-            <span class="value" id="int-ig-views">—</span>
-          </div>
-          <div class="integrated-stat">
-            <span class="label">PUBGM 콘텐츠</span>
-            <span class="value" id="int-ig-pubgm">—</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 플랫폼별 조회수 비율 바 -->
-      <div class="total-bar-wrap">
-        <div class="section-title" style="margin-bottom:16px">플랫폼별 조회수 비중</div>
-        <div class="total-bar-row">
-          <span class="total-bar-label">▶ YouTube</span>
-          <div class="total-bar-track"><div class="total-bar-fill" id="bar-yt" style="background:#ff4444;width:0%"></div></div>
-          <span class="total-bar-val" id="barval-yt">—</span>
-        </div>
-        <div class="total-bar-row">
-          <span class="total-bar-label">🎵 TikTok</span>
-          <div class="total-bar-track"><div class="total-bar-fill" id="bar-tt" style="background:var(--cyan);width:0%"></div></div>
-          <span class="total-bar-val" id="barval-tt">—</span>
-        </div>
-        <div class="total-bar-row" style="margin-bottom:0">
-          <span class="total-bar-label">📸 Instagram</span>
-          <div class="total-bar-track"><div class="total-bar-fill" id="bar-ig" style="background:#e1306c;width:0%"></div></div>
-          <span class="total-bar-val" id="barval-ig">—</span>
-        </div>
-      </div>
-
-      <!-- 파트너별 통합 테이블 -->
-      <div class="sns-table-wrap">
-        <table class="sns-table">
-          <thead>
-            <tr>
-              <th>파트너</th>
-              <th>YT 조회수</th>
-              <th>YT 업로드</th>
-              <th>TT 조회수</th>
-              <th>TT 건수</th>
-              <th>IG 조회수</th>
-              <th>IG 건수</th>
-              <th>전체 조회수</th>
-            </tr>
-          </thead>
-          <tbody id="intTableBody">
-            <tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted)">데이터 로딩 중...</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-    </div><!-- /integratedContent -->
-  </div><!-- /panel-integrated -->
-
+  <!-- Row 5 -->
+  <div class="tbl-wrap"><table><thead><tr>
+    <th>파트너</th><th>YT 업로드</th><th>YT 조회수</th><th>TT 업로드</th><th>TT 조회수</th><th>IG 업로드</th><th>IG 조회수</th><th>전체 업로드</th><th>전체 조회수</th>
+  </tr></thead>
+  <tbody id="intBody"><tr><td colspan="9"><div class="empty">YouTube 조회와 SNS 시트 연동을 모두 완료하면 표시됩니다.</div></td></tr></tbody>
+  </table></div>
+</div>
 </main>
+<div class="toast" id="toast"></div>
 
 <script>
-// ─────────────────────────────────────────────────────────
-//  상태
-// ─────────────────────────────────────────────────────────
-// PUBGM 포함 키워드 (모바일 전용)
-const PUBGM_KEYWORDS = [
-  'pubg mobile', 'pubgmobile', 'pubgm',
-  '배그 모바일', '배그모바일', '배틀그라운드 모바일', '배틀그라운드모바일',
-  '배모', '모배',
-];
-// PC 배그 등 제외 키워드
-const PUBGM_EXCLUDE_KEYWORDS = [
-  'pubg pc', 'pubg: battlegrounds', '배그 pc', 'pc배그',
-];
+// ── 상수 ──────────────────────────────────
+const APPS_PROXY   = 'https://script.google.com/macros/s/AKfycbx7Sfsgi87goihgEeKpcCHwngCKjB3lijdgcgIMtgO55eyZjYkJ6AaQdIlTrovIMMsX/exec';
+const SNS_SHEET_ID = '1nRSlETZFTft19tERmM1tL2Eyn3H9Z4WnyYR27GJGIWI';
+const YT_BASE      = 'https://www.googleapis.com/youtube/v3';
+const PKWS = ['pubg mobile','pubgmobile','pubgm','배그 모바일','배그모바일','배틀그라운드 모바일','배틀그라운드모바일','배모','모배'];
+const EKWS = ['pubg pc','pubg: battlegrounds','배그 pc','pc배그'];
+const COLORS = ['#f7b731','#29d6e0','#2ecc71','#ff6b9d','#a29bfe','#fd79a8','#00cec9','#fdcb6e','#e17055','#74b9ff'];
 
-let partners = JSON.parse(localStorage.getItem('pm_partners') || 'null') || [
-  { name: '상책이', handle: '@sangcheck2'   },
-  { name: '시어',   handle: '@seer_5228'    },
-  { name: '세드',   handle: '@세드님'        },
-  { name: '비누',   handle: '@beenutv'      },
-  { name: '물감',   handle: '@MOOLGAM_0'    },
-  { name: '목장갑', handle: '@MOK77'         },
-  { name: '절절포', handle: '@-zzp'          },
-  { name: '빡지',   handle: '@PAKG'          },
-  { name: '오살',   handle: '@pubgmosal'     },
+let partners = JSON.parse(localStorage.getItem('pm_partners')||'null') || [
+  {name:'상책이',handle:'@sangcheck2'},{name:'시어',handle:'@Seer_0127'},
+  {name:'세드',handle:'@세드님'},{name:'비누',handle:'@beenutv'},
+  {name:'물감',handle:'@MOOLGAM_0'},{name:'목장갑',handle:'@MOK77'},
+  {name:'절절포',handle:'@-zzp'},{name:'빡지',handle:'@PAKG'},
+  {name:'오살',handle:'@pubgmosal'}
 ];
+let ytData=[], snsData=[], sf='all', sk='weekly', sd=-1;
+let ytDM='uploads', snsDM='uploads', intDM='uploads';
 
-let tableData = []; // 렌더용 데이터
-let sortKey = 'weekly';
-let sortDir = -1; // -1 = desc
-let autoRefreshTimer = null;
-
-// ─────────────────────────────────────────────────────────
-//  초기화
-// ─────────────────────────────────────────────────────────
+// ── 초기화 ────────────────────────────────
 window.onload = () => {
-  const savedKey = localStorage.getItem('pm_apikey');
-  if (savedKey) {
-    document.getElementById('apiKeyInput').value = savedKey;
-    document.getElementById('apiKeySaved').textContent = '✓ 저장됨';
-    document.getElementById('apiKeySaved').style.color = 'var(--green)';
-  }
-  renderChannelTags();
-
-  // 날짜 직접입력 기본값 설정 (오늘 기준 30일)
-  const today = new Date();
-  const from  = new Date(today); from.setDate(today.getDate() - 30);
-  document.getElementById('dateTo').value   = today.toISOString().slice(0, 10);
-  document.getElementById('dateFrom').value = from.toISOString().slice(0, 10);
-
-  // SNS 캐시 복원
-  const cachedSns = localStorage.getItem('pm_sns_data');
-  if (cachedSns) {
-    snsRawData = JSON.parse(cachedSns);
-    document.getElementById('snsBadge').textContent = snsRawData.length;
-    setSheetStatus('ok', `✓ ${snsRawData.length}건 (캐시)`);
-    renderSnsTable();
-    renderSnsSummary();
-  }
+  const k = localStorage.getItem('pm_apikey');
+  if(k){ document.getElementById('apiKeyInput').value=k; setSaved(true); }
+  rTags();
+  const t=new Date(), f=new Date(t); f.setDate(t.getDate()-30);
+  document.getElementById('dateTo').value   = t.toLocaleDateString('sv-SE');
+  document.getElementById('dateFrom').value = f.toLocaleDateString('sv-SE');
+  const s = localStorage.getItem('pm_sns_data');
+  if(s){ snsData=JSON.parse(s); rSnsAll(); }
 };
 
-// ─────────────────────────────────────────────────────────
-//  채널 태그 렌더
-// ─────────────────────────────────────────────────────────
-function renderChannelTags() {
-  document.getElementById('sumPartners').textContent = partners.length;
-  const container = document.getElementById('channelTags');
-  container.innerHTML = partners.map((p, i) => `
-    <div class="channel-tag">
-      <span class="dot"></span>
-      <span>${p.name} <span style="opacity:0.5">${p.handle}</span></span>
-      <span class="remove" onclick="removeChannel(${i})">×</span>
-    </div>
-  `).join('');
+function saveApiKey(){ const k=document.getElementById('apiKeyInput').value.trim(); localStorage.setItem('pm_apikey',k); setSaved(!!k); }
+function setSaved(b){ const el=document.getElementById('apiKeySaved'); el.textContent=b?'✓ 저장됨':''; el.style.color=b?'var(--green)':''; }
+
+function stab(n,btn){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active'); document.getElementById('p'+n).classList.add('active');
+  if(n==='int') rIntAll();
 }
 
-function addChannel() {
-  const name   = document.getElementById('newChannelName').value.trim();
-  const handle = document.getElementById('newChannelHandle').value.trim();
-  if (!name || !handle) { showToast('이름과 핸들을 모두 입력해주세요', 'error'); return; }
-  const h = handle.startsWith('@') ? handle : '@' + handle;
-  partners.push({ name, handle: h });
-  localStorage.setItem('pm_partners', JSON.stringify(partners));
-  document.getElementById('newChannelName').value  = '';
-  document.getElementById('newChannelHandle').value = '';
-  renderChannelTags();
-  showToast(`${name} 추가됨`, 'success');
+function applyPreset(){
+  document.getElementById('dateInputs').style.display = document.getElementById('periodPreset').value==='custom'?'flex':'none';
 }
 
-function removeChannel(i) {
-  partners.splice(i, 1);
-  localStorage.setItem('pm_partners', JSON.stringify(partners));
-  renderChannelTags();
-}
-
-// ─────────────────────────────────────────────────────────
-//  API 호출 유틸
-// ─────────────────────────────────────────────────────────
-const API_BASE = 'https://www.googleapis.com/youtube/v3';
-
-// YouTube API 호출 — Anthropic API를 프록시로 경유해 CORS 우회
-async function yt(endpoint, params) {
-  const key = document.getElementById('apiKeyInput').value.trim();
-  if (!key) throw new Error('API 키를 먼저 입력해주세요');
-  localStorage.setItem('pm_apikey', key);
-  const url = `${API_BASE}/${endpoint}?${new URLSearchParams({ ...params, key })}`;
-
-  // 1차: 직접 호출 시도
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data.error) throw new Error(`YouTube API 오류: ${data.error.message}`);
-    return data;
-  } catch (directErr) {
-    // CORS 오류 시 Anthropic API로 우회
-    if (!directErr.message.includes('YouTube API')) {
-      return await ytViaAnthropic(url);
-    }
-    throw directErr;
+function getDR(){
+  const p=document.getElementById('periodPreset').value, now=new Date();
+  const toS = now.toLocaleDateString('sv-SE');
+  if(p==='custom'){
+    const f=document.getElementById('dateFrom').value, t=document.getElementById('dateTo').value;
+    if(!f||!t){toast('날짜를 입력해주세요','err');return null;}
+    if(new Date(f)>new Date(t)){toast('시작일이 종료일보다 늦습니다','err');return null;}
+    if((new Date(t)-new Date(f))/86400000>365){toast('최대 1년까지 가능합니다','err');return null;}
+    return{after:f+'T00:00:00Z',before:t+'T23:59:59Z',label:`${f}~${t}`};
   }
+  const days=parseInt(p), from=new Date(now); from.setDate(now.getDate()-days);
+  return{after:from.toLocaleDateString('sv-SE')+'T00:00:00Z',before:toS+'T23:59:59Z',label:`최근 ${days}일`};
 }
 
-// Anthropic API를 통한 YouTube 데이터 수집
-async function ytViaAnthropic(youtubeUrl) {
-  const prompt = `다음 YouTube Data API URL에서 JSON 데이터를 가져와서 그대로 반환해주세요. 다른 설명 없이 JSON만 반환하세요.\n\nURL: ${youtubeUrl}`;
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4000,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  });
-  const result = await res.json();
-  const text = result.content?.find(b => b.type === 'text')?.text || '{}';
-  try {
-    const clean = text.replace(/```json|```/g, '').trim();
-    const data = JSON.parse(clean);
-    if (data.error) throw new Error(`YouTube API 오류: ${data.error.message}`);
-    return data;
-  } catch {
-    throw new Error('데이터를 가져올 수 없습니다. API 키를 확인해주세요.');
+// ── YouTube API ────────────────────────────
+function cls(t){ const l=t.toLowerCase(); const i=PKWS.some(k=>l.includes(k)),e=EKWS.some(k=>l.includes(k)); if(i&&e)return'ambiguous'; if(i)return'pubgm'; return null; }
+function isPG(t){ const r=cls(t); return r==='pubgm'||r==='ambiguous'; }
+function pDur(s){ if(!s)return 0; const m=s.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/); if(!m)return 0; return(parseInt(m[1]||0)*3600)+(parseInt(m[2]||0)*60)+parseInt(m[3]||0); }
+function isSh(d,t){ return(pDur(d)>0&&pDur(d)<=60)||/#shorts/i.test(t); }
+
+async function ytFetch(ep,params){
+  const key=document.getElementById('apiKeyInput').value.trim();
+  if(!key)throw new Error('API 키를 입력해주세요');
+  const url=`${YT_BASE}/${ep}?${new URLSearchParams({...params,key})}`;
+  const proxyUrl=`${APPS_PROXY}?endpoint=${encodeURIComponent(url)}`;
+  const r=await fetch(proxyUrl);
+  if(!r.ok)throw new Error(`HTTP ${r.status}`);
+  const d=await r.json();
+  if(d.error)throw new Error(d.error.message||'YouTube API 오류');
+  return d;
+}
+
+async function getVStats(ids){
+  if(!ids.length)return[];
+  const d=await ytFetch('videos',{part:'statistics,snippet,contentDetails',id:ids.join(',')});
+  return d.items||[];
+}
+
+async function getVids(chId,after,before){
+  let items=[],pt;
+  for(let p=0;p<3;p++){
+    const ps={part:'snippet',channelId:chId,order:'date',maxResults:50,type:'video',publishedAfter:after,publishedBefore:before,...(pt?{pageToken:pt}:{})};
+    const d=await ytFetch('search',ps);
+    items=items.concat(d.items||[]);
+    if(!d.nextPageToken||!d.items?.length)break;
+    pt=d.nextPageToken;
   }
-}
-
-// 핸들 → channelId 변환
-async function resolveChannelId(handle) {
-  const h = handle.startsWith('@') ? handle : '@' + handle;
-  const data = await yt('channels', { part: 'id,snippet', forHandle: h.slice(1) });
-  if (!data.items?.length) throw new Error(`채널을 찾을 수 없음: ${h}`);
-  return { id: data.items[0].id, title: data.items[0].snippet.title, thumbnail: data.items[0].snippet.thumbnails?.default?.url };
-}
-
-// 채널 통계
-async function getChannelStats(channelId) {
-  const data = await yt('channels', { part: 'statistics', id: channelId });
-  return data.items?.[0]?.statistics || {};
-}
-
-// 영상 통계 (videos.list — 최대 50개)
-async function getVideoStats(ids) {
-  if (!ids.length) return [];
-  const data = await yt('videos', { part: 'statistics,snippet,contentDetails', id: ids.join(',') });
-  return data.items || [];
-}
-
-// ISO 8601 duration → 초 변환 (예: PT1M30S → 90)
-function parseDuration(iso) {
-  if (!iso) return 0;
-  const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-  if (!m) return 0;
-  return (parseInt(m[1] || 0) * 3600) + (parseInt(m[2] || 0) * 60) + parseInt(m[3] || 0);
-}
-
-// Shorts 판별: 60초 이하 OR 제목/설명에 #Shorts 포함
-function detectIsShorts(duration, titleAndDesc) {
-  const secs = parseDuration(duration);
-  const hasTag = /#shorts/i.test(titleAndDesc);
-  return (secs > 0 && secs <= 60) || hasTag;
-}
-
-// 기간 내 영상 수집 (search → videos.list)
-// maxResults: 최대 50개 (search.list 한계), 기간이 길수록 페이지 순회
-async function getAllVideos(channelId, publishedAfter, publishedBefore) {
-  let allItems = [];
-  let pageToken = undefined;
-
-  // search.list는 최대 50개/회, 최대 3페이지(150개)까지만 수집 (할당량 절약)
-  for (let page = 0; page < 3; page++) {
-    const params = {
-      part: 'snippet', channelId, order: 'date',
-      maxResults: 50, type: 'video',
-      publishedAfter,
-      publishedBefore,
-      ...(pageToken ? { pageToken } : {}),
-    };
-    const searchData = await yt('search', params);
-    const items = searchData.items || [];
-    allItems = allItems.concat(items);
-    if (!searchData.nextPageToken || items.length < 50) break;
-    pageToken = searchData.nextPageToken;
-  }
-
-  if (!allItems.length) return [];
-
-  // videos.list는 50개씩 배치 처리
-  const ids = allItems.map(i => i.id.videoId).filter(Boolean);
-  const allStats = [];
-  for (let i = 0; i < ids.length; i += 50) {
-    const batch = await getVideoStats(ids.slice(i, i + 50));
-    allStats.push(...batch);
-  }
-  const statsMap = Object.fromEntries(allStats.map(v => [v.id, v]));
-
-  return allItems.map(i => {
-    const vid = statsMap[i.id.videoId] || {};
-    const text = i.snippet.title + ' ' + (i.snippet.description || '');
-    return {
-      id: i.id.videoId,
-      title: i.snippet.title,
-      publishedAt: i.snippet.publishedAt,
-      thumbnail: i.snippet.thumbnails?.medium?.url || i.snippet.thumbnails?.default?.url,
-      viewCount:    parseInt(vid.statistics?.viewCount    || 0),
-      likeCount:    parseInt(vid.statistics?.likeCount    || 0),
-      commentCount: parseInt(vid.statistics?.commentCount || 0),
-      durationSecs: parseDuration(vid.contentDetails?.duration),
-      isShorts:     detectIsShorts(vid.contentDetails?.duration, text),
-      isPubgm:      isPubgm(text),
-      isAmbiguous:  classifyVideo(text) === 'ambiguous',
-    };
+  if(!items.length)return[];
+  const ids=items.map(i=>i.id.videoId).filter(Boolean);
+  const stats=[]; for(let i=0;i<ids.length;i+=50)stats.push(...await getVStats(ids.slice(i,i+50)));
+  const sm=Object.fromEntries(stats.map(v=>[v.id,v]));
+  return items.map(i=>{
+    const v=sm[i.id.videoId]||{};
+    const t=i.snippet.title+' '+(i.snippet.description||'');
+    return{id:i.id.videoId,title:i.snippet.title,publishedAt:i.snippet.publishedAt,
+      thumbnail:i.snippet.thumbnails?.medium?.url||i.snippet.thumbnails?.default?.url,
+      viewCount:parseInt(v.statistics?.viewCount||0),likeCount:parseInt(v.statistics?.likeCount||0),
+      commentCount:parseInt(v.statistics?.commentCount||0),durationSecs:pDur(v.contentDetails?.duration),
+      isShorts:isSh(v.contentDetails?.duration,t),isPubgm:isPG(t),isAmbiguous:cls(t)==='ambiguous'};
   });
 }
 
-// 반환값: 'pubgm' | 'ambiguous' | null
-function classifyVideo(text) {
-  const lower = text.toLowerCase();
-  const hasInclude = PUBGM_KEYWORDS.some(k => lower.includes(k));
-  const hasExclude = PUBGM_EXCLUDE_KEYWORDS.some(k => lower.includes(k));
-  if (hasInclude && hasExclude) return 'ambiguous';
-  if (hasInclude) return 'pubgm';
-  return null;
-}
-function isPubgm(text) {
-  const r = classifyVideo(text);
-  return r === 'pubgm' || r === 'ambiguous';
-}
-
-// ─────────────────────────────────────────────────────────
-//  기간 선택 유틸
-// ─────────────────────────────────────────────────────────
-function saveApiKey() {
-  const key = document.getElementById('apiKeyInput').value.trim();
-  const indicator = document.getElementById('apiKeySaved');
-  if (key) {
-    localStorage.setItem('pm_apikey', key);
-    indicator.textContent = '✓ 저장됨';
-    indicator.style.color = 'var(--green)';
-  } else {
-    localStorage.removeItem('pm_apikey');
-    indicator.textContent = '';
-  }
-}
-
-function applyPreset() {
-  const preset = document.getElementById('periodPreset').value;
-  const dateInputs = document.getElementById('dateInputs');
-  if (preset === 'custom') {
-    dateInputs.style.display = 'flex';
-    // 기본값: 오늘 기준 30일
-    const today = new Date();
-    const from  = new Date(today); from.setDate(today.getDate() - 30);
-    document.getElementById('dateTo').value   = today.toISOString().slice(0, 10);
-    document.getElementById('dateFrom').value = from.toISOString().slice(0, 10);
-  } else {
-    dateInputs.style.display = 'none';
-  }
-}
-
-function getDateRange() {
-  const preset = document.getElementById('periodPreset').value;
-  const now = new Date();
-
-  // 오늘 날짜 문자열 (로컬 기준)
-  const toDateStr = now.toLocaleDateString('sv-SE'); // 'YYYY-MM-DD' 형식
-
-  if (preset === 'custom') {
-    const from = document.getElementById('dateFrom').value;
-    const to   = document.getElementById('dateTo').value;
-    if (!from || !to) { showToast('날짜를 모두 입력해주세요', 'error'); return null; }
-    const fromDate = new Date(from);
-    const toDate   = new Date(to);
-    if (fromDate > toDate) { showToast('시작일이 종료일보다 늦습니다', 'error'); return null; }
-    const diffDays = (toDate - fromDate) / (1000 * 60 * 60 * 24);
-    if (diffDays > 365) { showToast('최대 조회 기간은 1년(365일)입니다', 'error'); return null; }
-    return {
-      publishedAfter:  from + 'T00:00:00Z',
-      publishedBefore: to   + 'T23:59:59Z',
-      label: `${from} ~ ${to}`,
-    };
-  } else {
-    const days = parseInt(preset);
-    const from = new Date(now);
-    from.setDate(now.getDate() - days);
-    const fromDateStr = from.toLocaleDateString('sv-SE');
-    return {
-      publishedAfter:  fromDateStr + 'T00:00:00Z',
-      publishedBefore: toDateStr   + 'T23:59:59Z',
-      label: `최근 ${days}일`,
-    };
-  }
-}
-
-// ─────────────────────────────────────────────────────────
-//  기간 비교 (YoY / MoM / WoW) 데이터
-// ─────────────────────────────────────────────────────────
-let trendData = null;   // { current, wow, mom, yoy }
-let trendMetric = 'uploads'; // 'uploads' | 'views'
-
-// 기간 범위를 N일/달/년 앞으로 이동
-function shiftRange(after, before, unit) {
-  const a = new Date(after), b = new Date(before);
-  if (unit === 'week') {
-    a.setDate(a.getDate() - 7); b.setDate(b.getDate() - 7);
-  } else if (unit === 'month') {
-    a.setMonth(a.getMonth() - 1); b.setMonth(b.getMonth() - 1);
-  } else if (unit === 'year') {
-    a.setFullYear(a.getFullYear() - 1); b.setFullYear(b.getFullYear() - 1);
-  }
-  return { after: a.toISOString(), before: b.toISOString() };
-}
-
-// 기간 내 전 파트너 집계 (uploads, views) — 빠른 수집용 (1페이지만)
-async function fetchPeriodSummary(channelIds, publishedAfter, publishedBefore) {
-  const results = [];
-  for (const id of channelIds) {
-    try {
-      const searchData = await yt('search', {
-        part: 'snippet', channelId: id, order: 'date',
-        maxResults: 50, type: 'video', publishedAfter, publishedBefore,
-      });
-      const items = searchData.items || [];
-      const videoIds = items.map(i => i.id.videoId).filter(Boolean);
-      let views = 0;
-      if (videoIds.length) {
-        for (let i = 0; i < videoIds.length; i += 50) {
-          const vStats = await getVideoStats(videoIds.slice(i, i + 50));
-          views += vStats.reduce((s, v) => s + parseInt(v.statistics?.viewCount || 0), 0);
-        }
-      }
-      const pubgmCount = items.filter(i => isPubgm(i.snippet.title + ' ' + (i.snippet.description || ''))).length;
-      results.push({ channelId: id, uploads: pubgmCount, views });
-    } catch { results.push({ channelId: id, uploads: 0, views: 0 }); }
-  }
-  return results;
-}
-
-function sumPeriod(arr) {
-  return { uploads: arr.reduce((s, r) => s + r.uploads, 0), views: arr.reduce((s, r) => s + r.views, 0) };
-}
-
-// ─────────────────────────────────────────────────────────
-//  전체 데이터 수집
-// ─────────────────────────────────────────────────────────
-async function fetchAllData() {
-  if (!document.getElementById('apiKeyInput').value.trim()) {
-    showToast('API 키를 입력해주세요', 'error'); return;
-  }
-
-  const dateRange = getDateRange();
-  if (!dateRange) return;
-
-  const btn = document.getElementById('fetchBtn');
-  btn.disabled = true;
-  document.getElementById('loadingOverlay').classList.add('active');
-  document.querySelector('.loading-text').textContent = `${dateRange.label} 데이터 수집 중...`;
-
-  try {
-    const results = [];
-    for (const p of partners) {
-      try {
-        const channel = await resolveChannelId(p.handle);
-        const [stats, videos] = await Promise.all([
-          getChannelStats(channel.id),
-          getAllVideos(channel.id, dateRange.publishedAfter, dateRange.publishedBefore)
+async function fetchAll(){
+  const dr=getDR(); if(!dr)return;
+  const btn=document.getElementById('fetchBtn'); btn.disabled=true;
+  const ld=document.getElementById('ytLd'); ld.style.display='flex';
+  document.getElementById('ldMsg').textContent=`${dr.label} 수집 중...`;
+  try{
+    const res=[];
+    for(const p of partners){
+      try{
+        const ch=await ytFetch('channels',{part:'id,snippet',forHandle:p.handle.replace('@','')});
+        if(!ch.items?.length)throw new Error(`채널 없음: ${p.handle}`);
+        const ci=ch.items[0].id, tt=ch.items[0].snippet.title, th=ch.items[0].snippet.thumbnails?.default?.url;
+        const[st,vids]=await Promise.all([
+          ytFetch('channels',{part:'statistics',id:ci}).then(d=>d.items?.[0]?.statistics||{}),
+          getVids(ci,dr.after,dr.before)
         ]);
-        const pubgmVideos = videos.filter(v => v.isPubgm);
-        results.push({
-          name:        p.name,
-          handle:      p.handle,
-          channelId:   channel.id,
-          title:       channel.title,
-          thumbnail:   channel.thumbnail,
-          subscribers: parseInt(stats.subscriberCount || 0),
-          weeklyPubgm: pubgmVideos.length,
-          totalViews:  videos.reduce((s, v) => s + v.viewCount, 0),
-          totalLikes:  videos.reduce((s, v) => s + v.likeCount, 0),
-          totalComments: videos.reduce((s, v) => s + v.commentCount, 0),
-          latestDate:  videos[0]?.publishedAt || null,
-          videos,
-          error: null,
-        });
-      } catch (e) {
-        results.push({ name: p.name, handle: p.handle, error: e.message, weeklyPubgm: 0, videos: [] });
-      }
+        const pv=vids.filter(v=>v.isPubgm);
+        res.push({name:p.name,handle:p.handle,channelId:ci,title:tt,thumbnail:th,
+          subscribers:parseInt(st.subscriberCount||0),uploads:pv.length,
+          totalViews:pv.reduce((s,v)=>s+v.viewCount,0),
+          totalLikes:pv.reduce((s,v)=>s+v.likeCount,0),
+          totalComments:pv.reduce((s,v)=>s+v.commentCount,0),
+          latestDate:pv[0]?.publishedAt||null,videos:vids,pubgmVideos:pv,error:null});
+      }catch(e){ res.push({name:p.name,handle:p.handle,error:e.message,uploads:0,totalViews:0,pubgmVideos:[],videos:[]}); }
     }
-
-    tableData = results;
-    sessionStorage.setItem('pm_cache', JSON.stringify({ ts: Date.now(), data: results }));
-    updateSummary();
-    renderTable();
-    renderDailyTrend();
-    document.querySelector('.card.green .card-sub').textContent = `PUBGM 관련 영상 (${dateRange.label})`;
-    document.getElementById('updateTime').textContent = '업데이트: ' + new Date().toLocaleString('ko-KR') + ' · ' + dateRange.label;
-    showToast(`${results.filter(r => !r.error).length}개 채널 수집 완료`, 'success');
-    document.getElementById('ytBadge').textContent = results.filter(r=>!r.error).length + '개';
-
-    // ── 비교 기간 수집 (YoY / MoM / WoW) ──
-    document.querySelector('.loading-text').textContent = '기간 비교 데이터 수집 중...';
-    const channelIds = results.filter(r => !r.error).map(r => r.channelId);
-    if (channelIds.length) {
-      const wow = shiftRange(dateRange.publishedAfter, dateRange.publishedBefore, 'week');
-      const mom = shiftRange(dateRange.publishedAfter, dateRange.publishedBefore, 'month');
-      const yoy = shiftRange(dateRange.publishedAfter, dateRange.publishedBefore, 'year');
-
-      const [wowRes, momRes, yoyRes] = await Promise.all([
-        fetchPeriodSummary(channelIds, wow.after, wow.before),
-        fetchPeriodSummary(channelIds, mom.after, mom.before),
-        fetchPeriodSummary(channelIds, yoy.after, yoy.before),
-      ]);
-
-      // 현재 기간 파트너별 집계
-      const currentPerPartner = results.filter(r => !r.error).map(r => ({
-        channelId: r.channelId,
-        name: r.title || r.name,
-        uploads: r.videos.filter(v => v.isPubgm).length,
-        views: r.totalViews,
-      }));
-
-      trendData = {
-        current: sumPeriod(currentPerPartner.map(r => ({ uploads: r.uploads, views: r.views }))),
-        wow: sumPeriod(wowRes), wowPerPartner: wowRes,
-        mom: sumPeriod(momRes),
-        yoy: sumPeriod(yoyRes),
-        currentPerPartner,
-        dateRange,
-        wowRange: wow, momRange: mom, yoyRange: yoy,
-      };
-      renderTrend();
-    }
-  } catch (e) {
-    showToast(e.message, 'error');
-  } finally {
-    btn.disabled = false;
-    document.getElementById('loadingOverlay').classList.remove('active');
-  }
+    ytData=res;
+    document.getElementById('ytBdg').textContent=res.filter(r=>!r.error).length+'개';
+    document.getElementById('updateTime').textContent='업데이트: '+new Date().toLocaleString('ko-KR')+' · '+dr.label;
+    rYtAll(dr); rIntAll();
+    toast(`${res.filter(r=>!r.error).length}개 채널 수집 완료`,'ok');
+  }catch(e){toast(e.message,'err');}
+  finally{btn.disabled=false;ld.style.display='none';}
 }
 
-// ─────────────────────────────────────────────────────────
-//  일자별 트렌드 차트
-// ─────────────────────────────────────────────────────────
-let dailyMetric = 'uploads';
-const PARTNER_COLORS = [
-  '#f7b731','#29d6e0','#2ecc71','#ff6b9d','#a29bfe',
-  '#fd79a8','#00cec9','#fdcb6e','#e17055','#74b9ff'
-];
+// ── YouTube 전체 렌더 ──────────────────────
+function rYtAll(dr){
+  const dr2=dr||getDR();
+  rYtRow1(); rDailyChart('yt',dr2); rRank('yt'); rNotice('yt'); rTbl();
+}
 
-function switchDailyMetric(metric, btn) {
-  dailyMetric = metric;
-  document.querySelectorAll('#dailyTrendSection .format-tab').forEach(b => b.classList.remove('active'));
+function rYtRow1(){
+  const ok=ytData.filter(d=>!d.error);
+  document.getElementById('ytP').textContent=ok.length;
+  document.getElementById('ytU').textContent=ok.reduce((s,d)=>s+d.uploads,0);
+  document.getElementById('ytV').textContent=fn(ok.reduce((s,d)=>s+d.totalViews,0));
+}
+
+function rTbl(){
+  const srch=document.getElementById('ytSrch').value.toLowerCase();
+  const sv=document.getElementById('ytSort').value;
+  let data=ytData.filter(d=>!srch||d.name.toLowerCase().includes(srch)||d.handle.toLowerCase().includes(srch));
+  data=[...data].sort((a,b)=>{
+    let va,vb;
+    const key=sk||sv;
+    if(key==='weekly'||key==='uploads'){va=a.uploads||0;vb=b.uploads||0;}
+    else if(key==='views'){va=a.totalViews||0;vb=b.totalViews||0;}
+    else if(key==='latest'){va=a.latestDate||'';vb=b.latestDate||'';}
+    else if(key==='subscribers'){va=a.subscribers||0;vb=b.subscribers||0;}
+    else{va=0;vb=0;}
+    return va<vb?sd:va>vb?-sd:0;
+  });
+  const tb=document.getElementById('ytBody');
+  if(!data.length){tb.innerHTML=`<tr><td colspan="9"><div class="empty">데이터 없음</div></td></tr>`;return;}
+  tb.innerHTML=data.map((d,i)=>{
+    if(d.error)return`<tr class="drow"><td><div class="ch-cell"><div class="av">⚠</div><div><div class="ch-name">${d.name}</div><div class="ch-handle">${d.handle}</div></div></div></td><td colspan="7" style="color:var(--red);font-size:11px">${d.error}</td><td></td></tr>`;
+    const pv=d.pubgmVideos||[];
+    const sc=pv.filter(v=>v.isShorts).length, lc=pv.filter(v=>!v.isShorts).length;
+    const wc=d.uploads===0?'warn':d.uploads>=3?'good':'ok';
+    const av=d.thumbnail?`<img src="${d.thumbnail}" alt="">`:(d.name||'?')[0];
+    const ld=d.latestDate?new Date(d.latestDate).toLocaleDateString('ko-KR'):'—';
+    return`<tr class="drow" id="yr${i}" onclick="togV(${i},this)">
+      <td><div class="ch-cell"><div class="av">${av}</div><div><div class="ch-name">${d.title||d.name}</div><div class="ch-handle">${d.handle}</div></div></div></td>
+      <td><span class="num">${fn(d.subscribers)}</span></td>
+      <td><span class="pill ${wc}">${d.uploads}건</span></td>
+      <td><div style="display:flex;gap:3px"><span class="pill lg">동${lc}</span><span class="pill sh">S${sc}</span></div></td>
+      <td><span class="num gold">${fn(d.totalViews)}</span></td>
+      <td><span class="num">${fn(d.totalLikes)}</span></td>
+      <td><span class="num">${fn(d.totalComments)}</span></td>
+      <td style="font-size:11px;color:var(--muted)">${ld}</td>
+      <td style="text-align:center;font-size:10px" id="ye${i}">▼</td>
+    </tr>
+    <tr id="yv${i}" style="display:none"><td colspan="9">${bVL(d,i)}</td></tr>`;
+  }).join('');
+}
+
+function bVL(d,idx){
+  const vids=d.pubgmVideos||[];
+  if(!vids.length)return`<div class="empty" style="padding:14px">이 기간 PUBGM 영상 없음</div>`;
+  const ac=vids.length,lc=vids.filter(v=>!v.isShorts).length,sc=vids.filter(v=>v.isShorts).length;
+  return`<div style="padding:8px 14px 0 42px;display:flex;gap:5px">
+    <button class="ftab active" onclick="ff(this,'all',${idx})">전체 ${ac}</button>
+    <button class="ftab" onclick="ff(this,'long',${idx})">동영상 ${lc}</button>
+    <button class="ftab" onclick="ff(this,'shorts',${idx})">Shorts ${sc}</button>
+  </div>
+  <div class="vgrid" id="vg${idx}">${rVC(vids)}</div>`;
+}
+function rVC(vids){
+  if(!vids.length)return`<div style="color:var(--muted);font-size:11px;padding:8px 0">영상 없음</div>`;
+  return vids.map(v=>{
+    const ts=v.durationSecs?(v.durationSecs<60?v.durationSecs+'초':Math.floor(v.durationSecs/60)+'분'):'';
+    const bd=v.isAmbiguous?`<span class="vdot" style="background:var(--orange)">?확인</span>`:v.isPubgm?`<span class="vdot">PUBGM</span>`:'';
+    const tb=v.isShorts?`<span class="tybdg sh">Shorts</span>`:`<span class="tybdg lg">동영상</span>`;
+    return`<a class="vcard" href="https://youtu.be/${v.id}" target="_blank" onclick="event.stopPropagation()">
+      <div class="vthumb">${v.thumbnail?`<img src="${v.thumbnail}" alt="">`:''} ${bd}</div>
+      <div class="vmeta">
+        <div>${tb}${ts?`<span style="font-size:8px;color:var(--muted);margin-left:3px">${ts}</span>`:''}</div>
+        <div class="vtitle">${v.title}</div>
+        <div class="vstats"><span>👁${fn(v.viewCount)}</span><span>👍${fn(v.likeCount)}</span><span>💬${fn(v.commentCount)}</span></div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px">${new Date(v.publishedAt).toLocaleDateString('ko-KR')}</div>
+      </div>
+    </a>`;
+  }).join('');
+}
+function ff(btn,fmt,idx){
+  btn.closest('div').querySelectorAll('.ftab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  const d=ytData[idx]; if(!d)return;
+  let vids=d.pubgmVideos||[];
+  if(fmt==='long')vids=vids.filter(v=>!v.isShorts);
+  if(fmt==='shorts')vids=vids.filter(v=>v.isShorts);
+  document.getElementById(`vg${idx}`).innerHTML=rVC(vids);
+}
+function togV(i,row){
+  const vr=document.getElementById(`yv${i}`),ex=document.getElementById(`ye${i}`);
+  const show=vr.style.display==='none';
+  vr.style.display=show?'':'none';ex.textContent=show?'▲':'▼';
+  row.style.background=show?'rgba(247,183,49,.02)':'';
+}
+function sBy(k){if(sk===k)sd*=-1;else{sk=k;sd=-1;}rTbl();}
+function exCSV(){
+  if(!ytData.length){toast('먼저 데이터를 조회해주세요','err');return;}
+  const h=['채널명','핸들','구독자','PUBGM업로드','총조회수','총좋아요','총댓글','최근업로드일'];
+  const rows=ytData.map(d=>[d.title||d.name,d.handle,d.subscribers||'',d.uploads||'',d.totalViews||'',d.totalLikes||'',d.totalComments||'',d.latestDate?new Date(d.latestDate).toLocaleDateString('ko-KR'):'']);
+  const csv=[h,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv'})),download:`pubgm_${new Date().toISOString().slice(0,10)}.csv`});a.click();
+}
+function rTags(){
+  document.getElementById('chtags').innerHTML=partners.map((p,i)=>`<div class="chtag"><span class="dot"></span><span>${p.name} <span style="opacity:.5">${p.handle}</span></span><span class="rm" onclick="rmCh(${i})">×</span></div>`).join('');
+}
+function addCh(){
+  const n=document.getElementById('aname').value.trim(),h=document.getElementById('ahandle').value.trim();
+  if(!n||!h){toast('이름과 핸들을 모두 입력해주세요','err');return;}
+  partners.push({name:n,handle:h.startsWith('@')?h:'@'+h});
+  localStorage.setItem('pm_partners',JSON.stringify(partners));
+  document.getElementById('aname').value='';document.getElementById('ahandle').value='';
+  rTags();toast(`${n} 추가됨`,'ok');
+}
+function rmCh(i){partners.splice(i,1);localStorage.setItem('pm_partners',JSON.stringify(partners));rTags();}
+
+// ── SNS 연동 ──────────────────────────────
+async function loadSheetsData(){
+  const btn=document.getElementById('snsLoadBtn'); btn.disabled=true;
+  setSnsStatus('loading','⏳ 불러오는 중...');
+  try{
+    const url=`${APPS_PROXY}?sheetId=${SNS_SHEET_ID}`;
+    const r=await fetch(url);
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    const json=await r.json();
+    if(json.error)throw new Error(json.error);
+    snsData=json.slice(1).map(row=>{
+      const platform=String(row[0]||'').toLowerCase();
+      const link=String(row[1]||'').trim();
+      const date=String(row[2]||'').trim();
+      const views=parseInt(String(row[3]||'0').replace(/,/g,''))||0;
+      const partnerName=String(row[4]||'').trim();
+      if(!link&&!partnerName)return null;
+      const plat=platform.includes('tiktok')?'tiktok':platform.includes('instagram')?'instagram':link.includes('tiktok')?'tiktok':link.includes('instagram')?'instagram':'tiktok';
+      return{platform:plat,link,uploadDate:date,views,partnerName};
+    }).filter(Boolean);
+    localStorage.setItem('pm_sns_data',JSON.stringify(snsData));
+    setSnsStatus('ok',`✓ ${snsData.length}건`);
+    document.getElementById('snsBdg').textContent=snsData.length;
+    document.getElementById('snsLastUpdate').textContent='업데이트: '+new Date().toLocaleString('ko-KR');
+    rSnsAll(); rIntAll();
+    toast(`${snsData.length}건 로드 완료`,'ok');
+  }catch(e){setSnsStatus('error','✕ '+e.message);toast('시트 불러오기 실패','err');}
+  finally{btn.disabled=false;}
+}
+function setSnsStatus(t,m){const el=document.getElementById('sheetsStatus');el.className='sheets-status '+t;el.textContent=m;}
+
+function rSnsAll(){
+  rSnsRow1(); rDailyChart('sns'); rRank('sns'); rNotice('sns'); rSns();
+}
+
+function rSnsRow1(){
+  const tt=snsData.filter(r=>r.platform==='tiktok'), ig=snsData.filter(r=>r.platform==='instagram');
+  const partners_=[...new Set(snsData.map(r=>r.partnerName).filter(Boolean))];
+  document.getElementById('snsP').textContent=partners_.length;
+  document.getElementById('snsU').textContent=snsData.length;
+  document.getElementById('snsV').textContent=fn(snsData.reduce((s,r)=>s+r.views,0));
+}
+
+function fSns(f,btn){sf=f;document.querySelectorAll('#psns .ftab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');rSns();}
+function rSns(){
+  const srch=document.getElementById('snsSrch').value.toLowerCase();
+  let data=snsData;
+  if(sf!=='all')data=data.filter(r=>r.platform===sf);
+  if(srch)data=data.filter(r=>r.partnerName.toLowerCase().includes(srch));
+  // 파트너+플랫폼 기준으로 집계
+  const agg={};
+  data.forEach(r=>{
+    const k=`${r.partnerName}__${r.platform}`;
+    if(!agg[k])agg[k]={partnerName:r.partnerName,platform:r.platform,count:0,views:0,latestDate:'',links:[]};
+    agg[k].count++;
+    agg[k].views+=r.views;
+    if(r.uploadDate>agg[k].latestDate)agg[k].latestDate=r.uploadDate;
+    if(r.link)agg[k].links.push(r.link);
+  });
+  const rows=Object.values(agg).sort((a,b)=>b.count-a.count);
+  const tb=document.getElementById('snsBody');
+  if(!rows.length){tb.innerHTML=`<tr><td colspan="6"><div class="empty">${snsData.length?'검색 결과 없음':'시트 데이터 불러오기 버튼을 클릭해주세요.'}</div></td></tr>`;return;}
+  tb.innerHTML=rows.map(r=>{
+    const pp=r.platform==='tiktok'?`<span class="plat-pill tt">🎵 TikTok</span>`:`<span class="plat-pill ig">📸 Instagram</span>`;
+    const lk=r.links.length?`<a href="${r.links[0]}" target="_blank" style="color:var(--cyan);font-size:10px;text-decoration:none">🔗 최신 링크</a>`:'—';
+    return`<tr><td style="font-weight:500">${r.partnerName}</td><td>${pp}</td>
+      <td class="num" style="color:var(--gold)">${r.count}</td>
+      <td class="num cyan">${fn(r.views)}</td>
+      <td style="font-size:11px;color:var(--muted)">${r.latestDate||'—'}</td>
+      <td>${lk}</td></tr>`;
+  }).join('');
+}
+
+// ── 통합 현황 ────────────────────────────
+function rIntAll(){
+  rIntRow1(); rDailyChart('int'); rRank('int'); rNotice('int'); rIntTable();
+}
+
+function rIntRow1(){
+  const ytOk=ytData.filter(d=>!d.error);
+  const ytP_=ytOk.length;
+  const snsP_=[...new Set(snsData.map(r=>r.partnerName).filter(Boolean))].length;
+  const allP_=new Set([...ytOk.map(d=>d.name),...snsData.map(r=>r.partnerName)]).size;
+  const ytU_=ytOk.reduce((s,d)=>s+d.uploads,0);
+  const snsU_=snsData.length;
+  const ytV_=ytOk.reduce((s,d)=>s+d.totalViews,0);
+  const snsV_=snsData.reduce((s,r)=>s+r.views,0);
+  document.getElementById('intP').textContent=allP_||'—';
+  document.getElementById('intU').textContent=(ytU_+snsU_)||'—';
+  document.getElementById('intV').textContent=fn(ytV_+snsV_)||'—';
+}
+
+function rIntTable(){
+  const names=[...new Set([...ytData.filter(d=>!d.error).map(d=>d.name),...snsData.map(r=>r.partnerName)])];
+  const ytMap=Object.fromEntries(ytData.filter(d=>!d.error).map(d=>[d.name,d]));
+  const snsMap={};
+  snsData.forEach(r=>{
+    if(!snsMap[r.partnerName])snsMap[r.partnerName]={tt:{count:0,views:0},ig:{count:0,views:0}};
+    const k=r.platform==='tiktok'?'tt':'ig';
+    snsMap[r.partnerName][k].count++;
+    snsMap[r.partnerName][k].views+=r.views;
+  });
+  const rows=names.map(n=>{
+    const y=ytMap[n]||{uploads:0,totalViews:0};
+    const s=snsMap[n]||{tt:{count:0,views:0},ig:{count:0,views:0}};
+    return{n,yu:y.uploads,yv:y.totalViews,ttu:s.tt.count,ttv:s.tt.views,igu:s.ig.count,igv:s.ig.views,
+      totalU:y.uploads+s.tt.count+s.ig.count,totalV:y.totalViews+s.tt.views+s.ig.views};
+  }).sort((a,b)=>b.totalU-a.totalU);
+  const tb=document.getElementById('intBody');
+  if(!rows.length){tb.innerHTML=`<tr><td colspan="9"><div class="empty">YouTube 조회와 SNS 시트 연동을 모두 완료하면 표시됩니다.</div></td></tr>`;return;}
+  tb.innerHTML=rows.map(r=>`<tr>
+    <td style="font-weight:500">${r.n}</td>
+    <td class="num">${r.yu}</td><td class="num" style="color:#ff6666">${fn(r.yv)}</td>
+    <td class="num">${r.ttu}</td><td class="num" style="color:var(--tiktok)">${fn(r.ttv)}</td>
+    <td class="num">${r.igu}</td><td class="num" style="color:var(--insta)">${fn(r.igv)}</td>
+    <td class="num gold">${r.totalU}</td><td class="num cyan">${fn(r.totalV)}</td>
+  </tr>`).join('');
+}
+
+// ── 일일 트렌드 차트 ─────────────────────
+function switchDM(m,btn,tab){
+  if(tab==='yt')ytDM=m;
+  else if(tab==='sns')snsDM=m;
+  else intDM=m;
+  btn.closest('.row2-header').querySelectorAll('.ftab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  renderDailyTrend();
+  rDailyChart(tab);
 }
 
-function buildDailyData() {
-  const dayMap = {};
+function rDailyChart(tab, dr){
+  const dr2=dr||getDR();
+  const canvasId=tab+'Chart', xlabelId=tab+'XLabels', legendId=tab+'Legend';
+  const canvas=document.getElementById(canvasId); if(!canvas)return;
+  const metric=tab==='yt'?ytDM:tab==='sns'?snsDM:intDM;
 
-  tableData.filter(d => !d.error).forEach((d, pi) => {
-    (d.videos || []).filter(v => v.isPubgm).forEach(v => {
-      const day = v.publishedAt.slice(0, 10);
-      if (!dayMap[day]) dayMap[day] = { uploads: 0, views: 0, byPartner: {} };
-      dayMap[day].uploads += 1;
-      dayMap[day].views   += v.viewCount;
-      if (!dayMap[day].byPartner[d.name]) dayMap[day].byPartner[d.name] = { u: 0, v: 0, idx: pi };
-      dayMap[day].byPartner[d.name].u += 1;
-      dayMap[day].byPartner[d.name].v += v.viewCount;
+  // 날짜 범위 생성
+  let allDates=[];
+  if(dr2){
+    const s=new Date(dr2.after.slice(0,10)), e=new Date(dr2.before.slice(0,10));
+    for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1)) allDates.push(d.toLocaleDateString('sv-SE'));
+  }
+  if(!allDates.length){canvas.style.height='0';return;}
+  canvas.style.height='180px';
+
+  // 데이터 집계
+  let datasets=[];
+  if(tab==='yt'||tab==='int'){
+    ytData.filter(d=>!d.error).forEach((d,pi)=>{
+      const vals=allDates.map(date=>{
+        const pvs=(d.pubgmVideos||[]).filter(v=>v.publishedAt.slice(0,10)===date);
+        return metric==='uploads'?pvs.length:pvs.reduce((s,v)=>s+v.viewCount,0);
+      });
+      if(tab==='yt')datasets.push({name:d.name,color:COLORS[pi%COLORS.length],vals});
     });
-  });
-
-  // 조회 기간 전체를 연속 날짜로 채우기 (영상 없는 날 = 0)
-  const dr = getDateRange();
-  if (!dr) {
-    const dates = Object.keys(dayMap).sort();
-    return { dates, dayMap };
   }
-  const start = new Date(dr.publishedAfter.slice(0, 10));
-  const end   = new Date(dr.publishedBefore.slice(0, 10));
-  const allDates = [];
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    allDates.push(d.toLocaleDateString('sv-SE'));
-  }
-  // 영상 없는 날짜도 빈 객체로 채우기
-  allDates.forEach(day => {
-    if (!dayMap[day]) dayMap[day] = { uploads: 0, views: 0, byPartner: {} };
-  });
-
-  const dates = allDates;
-  return { dates, dayMap };
-}
-
-function renderDailyTrend() {
-  const section = document.getElementById('dailyTrendSection');
-  if (!tableData.length) { section.style.display = 'none'; return; }
-
-  const { dates, dayMap } = buildDailyData();
-  if (!dates.length) { section.style.display = 'none'; return; }
-  section.style.display = 'block';
-
-  const canvas = document.getElementById('dailyTrendCanvas');
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width  = canvas.offsetWidth  * dpr;
-  canvas.height = canvas.offsetHeight * dpr;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-
-  const W = canvas.offsetWidth, H = canvas.offsetHeight;
-  const padL = 52, padR = 16, padT = 16, padB = 8;
-  const chartW = W - padL - padR;
-  const chartH = H - padT - padB;
-
-  // 파트너 목록
-  const partnerNames = [...new Set(tableData.filter(d => !d.error).map(d => d.name))];
-
-  // 파트너별 날짜별 값
-  const datasets = partnerNames.map((name, pi) => ({
-    name,
-    color: PARTNER_COLORS[pi % PARTNER_COLORS.length],
-    values: dates.map(d => {
-      const bp = dayMap[d]?.byPartner[name];
-      return bp ? (dailyMetric === 'uploads' ? bp.u : bp.v) : 0;
-    }),
-  }));
-
-  // 전체 합계 라인
-  const totalValues = dates.map(d =>
-    dailyMetric === 'uploads' ? (dayMap[d]?.uploads || 0) : (dayMap[d]?.views || 0)
-  );
-
-  const maxVal = Math.max(...totalValues, 1);
-  const n = dates.length;
-  const xStep = n > 1 ? chartW / (n - 1) : chartW;
-
-  const xPos = i => padL + (n > 1 ? i * chartW / (n - 1) : chartW / 2);
-  const yPos = v => padT + chartH - (v / maxVal) * chartH;
-
-  // 배경 그리드
-  ctx.strokeStyle = 'rgba(30,45,61,0.6)';
-  ctx.lineWidth = 0.5;
-  for (let g = 0; g <= 4; g++) {
-    const y = padT + (chartH / 4) * g;
-    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
-    const val = Math.round(maxVal - (maxVal / 4) * g);
-    ctx.fillStyle = 'rgba(90,112,137,0.8)';
-    ctx.font = '10px Arial'; ctx.textAlign = 'right';
-    ctx.fillText(dailyMetric === 'views' ? fmtNum(val) : val, padL - 4, y + 4);
-  }
-
-  // 파트너별 라인 (얇게)
-  datasets.forEach(ds => {
-    if (ds.values.every(v => v === 0)) return;
-    ctx.beginPath();
-    ctx.strokeStyle = ds.color + '60';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([]);
-    ds.values.forEach((v, i) => {
-      const x = xPos(i), y = yPos(v);
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  if(tab==='sns'||tab==='int'){
+    const snsPartners=[...new Set(snsData.map(r=>r.partnerName).filter(Boolean))];
+    snsPartners.forEach((name,pi)=>{
+      const color=tab==='int'?COLORS[(ytData.length+pi)%COLORS.length]:COLORS[pi%COLORS.length];
+      const vals=allDates.map(date=>{
+        const rows=snsData.filter(r=>r.partnerName===name&&r.uploadDate===date);
+        return metric==='uploads'?rows.length:rows.reduce((s,r)=>s+r.views,0);
+      });
+      datasets.push({name,color,vals,isSns:true});
     });
+  }
+  if(!datasets.length){canvas.style.height='0';return;}
+
+  // 합계 라인
+  const totalVals=allDates.map((_,i)=>datasets.reduce((s,ds)=>s+ds.vals[i],0));
+  const maxRaw=Math.max(...totalVals,1);
+  // 축 스케일 — nice round number
+  const niceMax=niceScale(maxRaw);
+
+  // 캔버스 렌더
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=canvas.offsetWidth*dpr;
+  canvas.height=canvas.offsetHeight*dpr;
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  const W=canvas.offsetWidth,H=canvas.offsetHeight;
+  const pL=52,pR=12,pT=14,pB=6,cW=W-pL-pR,cH=H-pT-pB;
+  const n=allDates.length;
+  const xP=i=>pL+(n>1?i*cW/(n-1):cW/2);
+  const yP=v=>pT+cH-(v/niceMax)*cH;
+
+  // 그리드
+  const ticks=5;
+  for(let g=0;g<=ticks;g++){
+    const y=pT+(cH/ticks)*g;
+    const val=Math.round(niceMax-(niceMax/ticks)*g);
+    ctx.strokeStyle='rgba(30,45,61,.6)';ctx.lineWidth=.5;
+    ctx.beginPath();ctx.moveTo(pL,y);ctx.lineTo(W-pR,y);ctx.stroke();
+    ctx.fillStyle='rgba(90,112,137,.8)';ctx.font='9px Arial';ctx.textAlign='right';
+    ctx.fillText(metric==='views'?fn(val):val,pL-4,y+3);
+  }
+
+  // 파트너별 얇은 선
+  datasets.forEach(ds=>{
+    if(ds.vals.every(v=>v===0))return;
+    ctx.beginPath();ctx.strokeStyle=ds.color+'55';ctx.lineWidth=1.5;
+    ds.vals.forEach((v,i)=>{ const x=xP(i),y=yP(v); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
     ctx.stroke();
   });
 
-  // 전체 합계 라인 (굵게 + 면적)
-  const gradient = ctx.createLinearGradient(0, padT, 0, padT + chartH);
-  gradient.addColorStop(0, 'rgba(247,183,49,0.25)');
-  gradient.addColorStop(1, 'rgba(247,183,49,0.02)');
-
+  // 합계 면적
+  const g=ctx.createLinearGradient(0,pT,0,pT+cH);
+  g.addColorStop(0,'rgba(247,183,49,.2)');g.addColorStop(1,'rgba(247,183,49,.02)');
   ctx.beginPath();
-  totalValues.forEach((v, i) => {
-    const x = xPos(i), y = yPos(v);
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  });
-  ctx.lineTo(xPos(n-1), padT + chartH);
-  ctx.lineTo(xPos(0), padT + chartH);
-  ctx.closePath();
-  ctx.fillStyle = gradient;
-  ctx.fill();
+  totalVals.forEach((v,i)=>{ const x=xP(i),y=yP(v); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+  ctx.lineTo(xP(n-1),pT+cH);ctx.lineTo(xP(0),pT+cH);ctx.closePath();
+  ctx.fillStyle=g;ctx.fill();
 
-  ctx.beginPath();
-  ctx.strokeStyle = '#f7b731';
-  ctx.lineWidth = 2.5;
-  ctx.setLineDash([]);
-  totalValues.forEach((v, i) => {
-    const x = xPos(i), y = yPos(v);
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  });
+  // 합계 선
+  ctx.beginPath();ctx.strokeStyle='#f7b731';ctx.lineWidth=2;
+  totalVals.forEach((v,i)=>{ const x=xP(i),y=yP(v); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
   ctx.stroke();
 
-  // 데이터 포인트 (0인 날도 작은 점으로 표시)
-  totalValues.forEach((v, i) => {
-    ctx.beginPath();
-    ctx.arc(xPos(i), yPos(v), v > 0 ? 3.5 : 2, 0, Math.PI * 2);
-    ctx.fillStyle = v > 0 ? '#f7b731' : 'rgba(247,183,49,0.3)';
-    ctx.fill();
+  // 포인트
+  totalVals.forEach((v,i)=>{
+    ctx.beginPath();ctx.arc(xP(i),yP(v),v>0?3:1.5,0,Math.PI*2);
+    ctx.fillStyle=v>0?'#f7b731':'rgba(247,183,49,.3)';ctx.fill();
   });
 
-  // X축 날짜 레이블 (최대 8개)
-  const labelEl = document.getElementById('dailyXLabels');
-  const step = Math.max(1, Math.floor(n / 8));
-  const labelDates = dates.filter((_, i) => i === 0 || i === n-1 || i % step === 0);
-  labelEl.innerHTML = labelDates.map(d => {
-    const m = d.slice(5, 7), day = d.slice(8, 10);
-    return `<span>${m}/${day}</span>`;
-  }).join('');
+  // X축 레이블 (최대 8개)
+  const step=Math.max(1,Math.floor(n/8));
+  const labelDates=allDates.filter((_,i)=>i===0||i===n-1||i%step===0);
+  document.getElementById(xlabelId).innerHTML=labelDates.map(d=>`<span>${d.slice(5).replace('-','/')}</span>`).join('');
 
   // 범례
-  const legendEl = document.getElementById('dailyLegend');
-  legendEl.innerHTML = [
-    `<span style="display:flex;align-items:center;gap:4px"><span style="width:16px;height:2.5px;background:#f7b731;display:inline-block;border-radius:2px"></span>전체 합산</span>`,
-    ...partnerNames.slice(0, 5).map((name, pi) =>
-      `<span style="display:flex;align-items:center;gap:4px"><span style="width:16px;height:1.5px;background:${PARTNER_COLORS[pi % PARTNER_COLORS.length]}60;display:inline-block;border-radius:2px"></span>${name}</span>`
-    ),
-    partnerNames.length > 5 ? `<span style="color:var(--text-muted)">외 ${partnerNames.length - 5}명</span>` : ''
+  const legEl=document.getElementById(legendId);
+  legEl.innerHTML=[
+    `<span style="display:flex;align-items:center;gap:3px"><span style="width:14px;height:2px;background:var(--gold);display:inline-block;border-radius:1px"></span>전체</span>`,
+    ...datasets.slice(0,4).map(ds=>`<span style="display:flex;align-items:center;gap:3px"><span style="width:14px;height:1.5px;background:${ds.color}55;display:inline-block"></span>${ds.name}</span>`),
+    datasets.length>4?`<span style="color:var(--muted)">외 ${datasets.length-4}명</span>`:''
   ].join('');
 }
 
-
-function switchTrendMetric(metric, btn) {
-  trendMetric = metric;
-  document.querySelectorAll('#trendSection .format-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  if (trendData) renderTrend();
+function niceScale(max){
+  if(max<=0)return 10;
+  const rough=max*1.2;
+  const mag=Math.pow(10,Math.floor(Math.log10(rough)));
+  const fracs=[1,2,2.5,5,10];
+  for(const f of fracs){ const v=f*mag; if(v>=rough)return v; }
+  return rough;
 }
 
-function fmtDate(iso) {
-  const d = new Date(iso);
-  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
-}
-
-function renderDeltaBadge(curr, prev, elId) {
-  const el = document.getElementById(elId);
-  if (!prev || prev === 0) { el.textContent = '비교 데이터 없음'; el.style.color = 'var(--text-muted)'; return; }
-  const pct = ((curr - prev) / prev * 100).toFixed(1);
-  const up  = curr >= prev;
-  el.textContent = (up ? '▲ +' : '▼ ') + pct + '%';
-  el.style.color = up ? 'var(--green)' : 'var(--red)';
-}
-
-function drawMiniBar(canvasId, prevVal, currVal, color) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width  = canvas.offsetWidth  * dpr;
-  canvas.height = canvas.offsetHeight * dpr;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  const W = canvas.offsetWidth, H = canvas.offsetHeight;
-  const max = Math.max(prevVal, currVal, 1);
-  const barW = Math.floor(W * 0.28);
-  const gap  = Math.floor(W * 0.08);
-  const x1   = Math.floor((W - barW*2 - gap) / 2);
-  const x2   = x1 + barW + gap;
-
-  // 이전 바 (흐리게)
-  const h1 = Math.max(4, Math.round((prevVal / max) * (H - 4)));
-  ctx.fillStyle = 'rgba(90,112,137,0.4)';
-  ctx.beginPath();
-  ctx.roundRect(x1, H - h1, barW, h1, [3, 3, 0, 0]);
-  ctx.fill();
-
-  // 현재 바
-  const h2 = Math.max(4, Math.round((currVal / max) * (H - 4)));
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.roundRect(x2, H - h2, barW, h2, [3, 3, 0, 0]);
-  ctx.fill();
-}
-
-function drawBarChart(canvasId, partners, prevMap, metric) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width  = canvas.offsetWidth  * dpr;
-  canvas.height = canvas.offsetHeight * dpr;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  const W = canvas.offsetWidth, H = canvas.offsetHeight;
-  const n = partners.length;
-  if (!n) return;
-
-  const labelH = 22, topPad = 24;
-  const chartH = H - labelH - topPad;
-  const groupW = Math.floor(W / n);
-  const barW   = Math.max(4, Math.floor(groupW * 0.28));
-  const gap    = Math.max(2, Math.floor(groupW * 0.06));
-
-  const currVals = partners.map(p => metric === 'uploads' ? p.uploads : p.views);
-  const prevVals = partners.map(p => {
-    const match = prevMap.find(r => r.channelId === p.channelId);
-    return match ? (metric === 'uploads' ? match.uploads : match.views) : 0;
-  });
-  const maxVal = Math.max(...currVals, ...prevVals, 1);
-
-  partners.forEach((p, i) => {
-    const cx   = Math.floor(i * groupW + groupW / 2);
-    const xPrev = cx - barW - gap / 2;
-    const xCurr = cx + gap / 2;
-
-    // 이전 바
-    const hp = Math.max(2, Math.round((prevVals[i] / maxVal) * chartH));
-    ctx.fillStyle = 'rgba(90,112,137,0.4)';
-    ctx.beginPath();
-    ctx.roundRect(xPrev, topPad + chartH - hp, barW, hp, [2, 2, 0, 0]);
-    ctx.fill();
-
-    // 현재 바
-    const hc = Math.max(2, Math.round((currVals[i] / maxVal) * chartH));
-    const up = currVals[i] >= prevVals[i];
-    ctx.fillStyle = up ? 'rgba(247,183,49,0.75)' : 'rgba(255,77,77,0.65)';
-    ctx.beginPath();
-    ctx.roundRect(xCurr, topPad + chartH - hc, barW, hc, [2, 2, 0, 0]);
-    ctx.fill();
-
-    // 수치 라벨 (현재값)
-    ctx.fillStyle = 'rgba(232,237,243,0.7)';
-    ctx.font = `${Math.max(9, Math.min(11, Math.floor(groupW * 0.18)))}px Rajdhani, sans-serif`;
-    ctx.textAlign = 'center';
-    const label = currVals[i] >= 10000 ? (currVals[i]/10000).toFixed(1)+'만' : String(currVals[i]);
-    ctx.fillText(label, xCurr + barW/2, topPad + chartH - hc - 4);
-
-    // 채널명
-    ctx.fillStyle = 'rgba(138,160,180,0.9)';
-    ctx.font = `${Math.max(9, Math.min(11, Math.floor(groupW * 0.18)))}px Noto Sans KR, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText(p.name.length > 4 ? p.name.slice(0,4) : p.name, cx, H - 4);
-  });
-}
-
-function renderTrend() {
-  if (!trendData) return;
-  const m = trendMetric;
-  const { current, wow, mom, yoy, currentPerPartner, wowPerPartner, dateRange, wowRange, momRange, yoyRange } = trendData;
-
-  document.getElementById('trendSection').style.display = 'block';
-  document.getElementById('trendNote').textContent = `기준 기간: ${dateRange.label}`;
-
-  const val = x => m === 'uploads' ? x.uploads : x.views;
-  const fmt = x => m === 'views' ? fmtNum(x) : String(x);
-
-  // WoW
-  document.getElementById('wowCurrent').textContent = fmt(val(current));
-  document.getElementById('wowPrev').textContent    = `vs ${fmt(val(wow))}`;
-  renderDeltaBadge(val(current), val(wow), 'wowDelta');
-  document.getElementById('wowLabelPrev').textContent = fmtDate(wowRange.after).slice(5) + '~' + fmtDate(wowRange.before).slice(5);
-  document.getElementById('wowLabelCurr').textContent = fmtDate(dateRange.publishedAfter).slice(5) + '~';
-  drawMiniBar('wowChart', val(wow), val(current), 'rgba(41,214,224,0.7)');
-
-  // MoM
-  document.getElementById('momCurrent').textContent = fmt(val(current));
-  document.getElementById('momPrev').textContent    = `vs ${fmt(val(mom))}`;
-  renderDeltaBadge(val(current), val(mom), 'momDelta');
-  document.getElementById('momLabelPrev').textContent = fmtDate(momRange.after).slice(0,7);
-  document.getElementById('momLabelCurr').textContent = fmtDate(dateRange.publishedAfter).slice(0,7);
-  drawMiniBar('momChart', val(mom), val(current), 'rgba(247,183,49,0.7)');
-
-  // YoY
-  document.getElementById('yoyCurrent').textContent = fmt(val(current));
-  document.getElementById('yoyPrev').textContent    = `vs ${fmt(val(yoy))}`;
-  renderDeltaBadge(val(current), val(yoy), 'yoyDelta');
-  document.getElementById('yoyLabelPrev').textContent = fmtDate(yoyRange.after).slice(0,4) + '년';
-  document.getElementById('yoyLabelCurr').textContent = fmtDate(dateRange.publishedAfter).slice(0,4) + '년';
-  drawMiniBar('yoyChart', val(yoy), val(current), 'rgba(46,204,113,0.7)');
-
-  // 파트너별 바 차트
-  const barTitle = m === 'uploads' ? '파트너별 PUBGM 업로드 수 비교 (현재 vs WoW)' : '파트너별 조회수 비교 (현재 vs WoW)';
-  document.getElementById('barChartTitle').textContent = barTitle;
-  setTimeout(() => drawBarChart('barChart', currentPerPartner, wowPerPartner, m), 50);
-}
-
-// ─────────────────────────────────────────────────────────
-//  요약 카드 업데이트
-// ─────────────────────────────────────────────────────────
-function updateSummary() {
-  document.getElementById('sumPartners').textContent = tableData.length;
-  document.getElementById('sumViews').textContent   = fmtNum(tableData.reduce((s, d) => s + (d.totalViews || 0), 0));
-  document.getElementById('sumWeekly').textContent  = tableData.reduce((s, d) => s + (d.weeklyPubgm || 0), 0);
-  document.getElementById('sumInactive').textContent = tableData.filter(d => !d.error && d.weeklyPubgm === 0).length;
-
-  const ambiguousTotal = tableData.reduce((s, d) => s + (d.videos || []).filter(v => v.isAmbiguous).length, 0);
-  const banner = document.getElementById('ambiguousBanner');
-  if (ambiguousTotal > 0) {
-    document.getElementById('ambiguousCount').textContent = ambiguousTotal;
-    banner.style.display = 'flex';
+// ── Top/Bot 랭킹 ─────────────────────────
+function rRank(tab){
+  let rankedData=[];
+  if(tab==='yt'){
+    rankedData=ytData.filter(d=>!d.error).map(d=>({name:d.name,handle:d.handle,thumbnail:d.thumbnail,uploads:d.uploads,views:d.totalViews,title:d.title}));
+  } else if(tab==='sns'){
+    const pm={};
+    snsData.forEach(r=>{
+      if(!pm[r.partnerName])pm[r.partnerName]={name:r.partnerName,uploads:0,views:0};
+      pm[r.partnerName].uploads++;pm[r.partnerName].views+=r.views;
+    });
+    rankedData=Object.values(pm);
   } else {
-    banner.style.display = 'none';
+    const pm={};
+    ytData.filter(d=>!d.error).forEach(d=>{ pm[d.name]={name:d.name,thumbnail:d.thumbnail,uploads:d.uploads,views:d.totalViews,title:d.title}; });
+    snsData.forEach(r=>{
+      if(!pm[r.partnerName])pm[r.partnerName]={name:r.partnerName,uploads:0,views:0};
+      else{pm[r.partnerName].uploads+=1;pm[r.partnerName].views+=r.views;}
+    });
+    rankedData=Object.values(pm);
   }
-}
-
-// ─────────────────────────────────────────────────────────
-//  테이블 렌더
-// ─────────────────────────────────────────────────────────
-function renderTable() {
-  const search = document.getElementById('searchInput').value.toLowerCase();
-  let data = tableData.filter(d => !search || d.name.toLowerCase().includes(search) || d.handle.toLowerCase().includes(search));
-
-  // 정렬
-  data = [...data].sort((a, b) => {
-    let va, vb;
-    switch (sortKey) {
-      case 'weekly':      va = a.weeklyPubgm || 0;   vb = b.weeklyPubgm || 0;   break;
-      case 'views':       va = a.totalViews  || 0;   vb = b.totalViews  || 0;   break;
-      case 'subscribers': va = a.subscribers || 0;   vb = b.subscribers || 0;   break;
-      case 'likes':       va = a.totalLikes  || 0;   vb = b.totalLikes  || 0;   break;
-      case 'comments':    va = a.totalComments||0;   vb = b.totalComments||0;   break;
-      case 'latest':      va = a.latestDate  || '';  vb = b.latestDate  || '';  break;
-      case 'name':        va = a.name;               vb = b.name;               break;
-      default: va = 0; vb = 0;
-    }
-    return va < vb ? sortDir : va > vb ? -sortDir : 0;
-  });
-
-  const tbody = document.getElementById('tableBody');
-  if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="icon">🔍</div><p>검색 결과가 없습니다.</p></div></td></tr>`;
+  if(!rankedData.length){
+    const e=`<div class="notice-empty">데이터를 조회하면 랭킹이 표시됩니다.</div>`;
+    document.getElementById(tab+'Top3').innerHTML=e;
+    document.getElementById(tab+'Bot3').innerHTML=e;
     return;
   }
-
-  tbody.innerHTML = data.map((d, i) => {
-    if (d.error) return `
-      <tr class="partner-row">
-        <td><div class="channel-name-cell">
-          <div class="channel-avatar">⚠</div>
-          <div class="channel-info"><div class="name">${d.name}</div><div class="handle">${d.handle}</div></div>
-        </div></td>
-        <td colspan="7" style="color:var(--red);font-size:12px">${d.error}</td>
-        <td></td>
-      </tr>`;
-
-    const weeklyClass = d.weeklyPubgm === 0 ? 'warn' : d.weeklyPubgm >= 3 ? 'good' : 'ok';
-    const avatarHtml = d.thumbnail
-      ? `<img src="${d.thumbnail}" alt="${d.name}">`
-      : d.name[0];
-    const latestFormatted = d.latestDate ? new Date(d.latestDate).toLocaleDateString('ko-KR') : '—';
-
-    const pubgmVids   = d.videos.filter(v => v.isPubgm);
-    const shortsCount = pubgmVids.filter(v => v.isShorts).length;
-    const longCount   = pubgmVids.filter(v => !v.isShorts).length;
-
-    return `
-      <tr class="partner-row" id="row-${i}" onclick="toggleVideos(${i})">
-        <td><div class="channel-name-cell">
-          <div class="channel-avatar">${avatarHtml}</div>
-          <div class="channel-info">
-            <div class="name">${d.title || d.name}</div>
-            <div class="handle">${d.handle}</div>
-          </div>
-        </div></td>
-        <td class="metric-cell">${fmtNum(d.subscribers)}</td>
-        <td><span class="weekly-badge ${weeklyClass}">${d.weeklyPubgm}건</span></td>
-        <td>
-          <div style="display:flex;gap:6px;align-items:center">
-            <span style="font-size:11px;color:var(--text-dim);background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 7px">
-              🎬 ${longCount}
-            </span>
-            <span style="font-size:11px;color:var(--cyan);background:rgba(41,214,224,0.08);border:1px solid rgba(41,214,224,0.2);border-radius:4px;padding:2px 7px">
-              ▶ Shorts ${shortsCount}
-            </span>
-          </div>
-        </td>
-        <td class="metric-cell highlight">${fmtNum(d.totalViews)}</td>
-        <td class="metric-cell">${fmtNum(d.totalLikes)}</td>
-        <td class="metric-cell">${fmtNum(d.totalComments)}</td>
-        <td style="font-size:12px;color:var(--text-dim)">${latestFormatted}</td>
-        <td style="text-align:center"><span class="expand-icon">▼</span></td>
-      </tr>
-      <tr class="video-list-row hidden" id="videos-${i}">
-        <td colspan="9">${buildVideoList(d, i)}</td>
-      </tr>`;
-  }).join('');
+  const sorted=[...rankedData].sort((a,b)=>b.uploads-a.uploads);
+  const top3=sorted.slice(0,3), bot3=[...sorted].reverse().slice(0,3);
+  document.getElementById(tab+'Top3').innerHTML=top3.map((d,i)=>rankItem(d,i+1,false)).join('');
+  document.getElementById(tab+'Bot3').innerHTML=bot3.map((d,i)=>rankItem(d,i+1,true)).join('');
 }
 
-function buildVideoList(d, idx) {
-  const pubgmOnly = document.getElementById('pubgmFilter')?.checked;
-  let vids = pubgmOnly ? d.videos.filter(v => v.isPubgm) : d.videos;
-  if (!vids.length) return `<div class="video-list" style="color:var(--text-muted);font-size:13px;padding:20px 20px 20px 68px">이 기간 영상 없음</div>`;
-
-  // 필터 탭 (전체 / 동영상 / Shorts)
-  const allCount    = vids.length;
-  const longCount   = vids.filter(v => !v.isShorts).length;
-  const shortsCount = vids.filter(v =>  v.isShorts).length;
-
-  return `
-    <div style="padding:12px 20px 0 68px; display:flex; gap:8px; border-top:1px solid rgba(30,45,61,0.5)">
-      <button class="format-tab active" onclick="filterFormat(this,'all',${idx})" data-format="all">전체 ${allCount}</button>
-      <button class="format-tab" onclick="filterFormat(this,'long',${idx})" data-format="long">🎬 동영상 ${longCount}</button>
-      <button class="format-tab" onclick="filterFormat(this,'shorts',${idx})" data-format="shorts">▶ Shorts ${shortsCount}</button>
+function rankItem(d,rank,isBot){
+  const av=d.thumbnail?`<img src="${d.thumbnail}" alt="">`:(d.name||'?')[0];
+  const warn=isBot&&d.uploads===0?`<span class="warn-badge">활동 없음</span>`:'';
+  return`<div class="rank-item">
+    <span class="rank-num">${rank}</span>
+    <div class="av">${av}</div>
+    <div class="rank-info">
+      <div class="rank-name">${d.title||d.name}</div>
+      ${d.handle?`<div class="rank-handle">${d.handle}</div>`:''}
+      <div class="rank-metrics">
+        <span style="color:var(--gold);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700">${d.uploads}건</span>
+        <span style="color:var(--muted);font-size:10px">${fn(d.views)} 조회</span>
+      </div>
     </div>
-    <div class="video-list" id="vlist-${idx}">${renderVideoCards(vids)}</div>`;
+    ${warn}
+  </div>`;
 }
 
-function filterFormat(btn, format, idx) {
-  btn.closest('div').querySelectorAll('.format-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const d = tableData.find((_, i) => i === idx);
-  if (!d) return;
-  const pubgmOnly = document.getElementById('pubgmFilter')?.checked;
-  let vids = pubgmOnly ? d.videos.filter(v => v.isPubgm) : d.videos;
-  if (format === 'long')   vids = vids.filter(v => !v.isShorts);
-  if (format === 'shorts') vids = vids.filter(v =>  v.isShorts);
-  document.getElementById(`vlist-${idx}`).innerHTML = renderVideoCards(vids);
-}
-
-function fmtDuration(secs) {
-  if (!secs) return '';
-  if (secs < 60) return `${secs}초`;
-  const m = Math.floor(secs / 60), s = secs % 60;
-  return s ? `${m}분 ${s}초` : `${m}분`;
-}
-
-function renderVideoCards(vids) {
-  if (!vids.length) return `<div style="color:var(--text-muted);font-size:13px;padding:16px 0">해당 형식의 영상 없음</div>`;
-  return vids.map(v => `
-    <a class="video-card ${v.isAmbiguous ? 'ambiguous' : ''}" href="https://youtu.be/${v.id}" target="_blank" onclick="event.stopPropagation()">
-      <div class="video-thumb">
-        ${v.thumbnail ? `<img src="${v.thumbnail}" alt="">` : ''}
-        ${v.isAmbiguous
-          ? `<span class="ambiguous-badge">?확인필요</span>`
-          : v.isPubgm ? `<span class="pubgm-badge">PUBGM</span>` : ''}
-      </div>
-      <div class="video-meta">
-        <div style="display:flex;gap:5px;align-items:center;margin-bottom:4px">
-          ${v.isShorts
-            ? `<span style="font-size:9px;font-weight:700;color:var(--cyan);background:rgba(41,214,224,0.1);border:1px solid rgba(41,214,224,0.25);border-radius:3px;padding:1px 5px">Shorts</span>`
-            : `<span style="font-size:9px;font-weight:700;color:var(--text-muted);background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:1px 5px">동영상</span>`}
-          ${v.durationSecs ? `<span style="font-size:9px;color:var(--text-muted)">${fmtDuration(v.durationSecs)}</span>` : ''}
-        </div>
-        <div class="video-title">${v.title}</div>
-        <div class="video-stats">
-          <span>👁 ${fmtNum(v.viewCount)}</span>
-          <span>👍 ${fmtNum(v.likeCount)}</span>
-          <span>💬 ${fmtNum(v.commentCount)}</span>
-        </div>
-        ${v.isAmbiguous ? `<div class="ambiguous-note">⚠ 모바일/PC 키워드 혼재 — 수동 확인 필요</div>` : ''}
-        <div style="font-size:10px;color:var(--text-muted);margin-top:4px">${new Date(v.publishedAt).toLocaleDateString('ko-KR')}</div>
-      </div>
-    </a>`).join('');
-}
-
-function toggleVideos(i) {
-  const row    = document.getElementById(`row-${i}`);
-  const videos = document.getElementById(`videos-${i}`);
-  if (!row || !videos) return;
-  const isOpen = !videos.classList.contains('hidden');
-  videos.classList.toggle('hidden', isOpen);
-  row.classList.toggle('expanded', !isOpen);
-}
-
-// ─────────────────────────────────────────────────────────
-//  정렬 / 필터
-// ─────────────────────────────────────────────────────────
-function sortBy(key) {
-  if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = -1; }
-  document.querySelectorAll('.partner-table th.sortable').forEach(th => {
-    th.classList.toggle('active-sort', th.dataset.sort === key);
-  });
-  renderTable();
-}
-function sortTable() {
-  const map = { weekly: 'weekly', views: 'views', latest: 'latest', name: 'name' };
-  sortKey = map[document.getElementById('sortSelect').value] || 'weekly';
-  renderTable();
-}
-function filterTable() { renderTable(); }
-
-// ─────────────────────────────────────────────────────────
-//  CSV 내보내기
-// ─────────────────────────────────────────────────────────
-function exportCSV() {
-  if (!tableData.length) { showToast('먼저 데이터를 조회해주세요', 'error'); return; }
-  const headers = ['채널명','핸들','구독자','주간PUBGM업로드','총조회수','총좋아요','총댓글','최근업로드일'];
-  const rows = tableData.map(d => [
-    d.title || d.name, d.handle,
-    d.subscribers || '', d.weeklyPubgm || '',
-    d.totalViews || '', d.totalLikes || '', d.totalComments || '',
-    d.latestDate ? new Date(d.latestDate).toLocaleDateString('ko-KR') : ''
-  ]);
-  const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const a    = Object.assign(document.createElement('a'), { href: url, download: `pubgm_partner_${new Date().toISOString().slice(0,10)}.csv` });
-  a.click(); URL.revokeObjectURL(url);
-}
-
-// ─────────────────────────────────────────────────────────
-//  자동 새로고침
-// ─────────────────────────────────────────────────────────
-function toggleAutoRefresh() {
-  const on = document.getElementById('autoRefreshToggle').checked;
-  if (on) { autoRefreshTimer = setInterval(fetchAllData, 30 * 60 * 1000); showToast('30분 자동 새로고침 활성화', 'success'); }
-  else     { clearInterval(autoRefreshTimer); showToast('자동 새로고침 비활성화'); }
-}
-
-// ─────────────────────────────────────────────────────────
-//  유틸
-// ─────────────────────────────────────────────────────────
-function fmtNum(n) {
-  if (n >= 100000000) return (n / 100000000).toFixed(1) + '억';
-  if (n >= 10000)     return (n / 10000).toFixed(1) + '만';
-  return n.toLocaleString('ko-KR');
-}
-
-function showToast(msg, type = '') {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'toast' + (type ? ' ' + type : '') + ' show';
-  setTimeout(() => el.classList.remove('show'), 3000);
-}
-// ─────────────────────────────────────────────────────────
-//  메인 탭 전환
-// ─────────────────────────────────────────────────────────
-function switchMainTab(name, btn) {
-  document.querySelectorAll('.main-tab').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('panel-' + name).classList.add('active');
-  if (name === 'integrated') renderIntegrated();
-}
-
-// ─────────────────────────────────────────────────────────
-//  Google Sheets 연동
-// ─────────────────────────────────────────────────────────
-let snsRawData    = [];   // Sheets 전체 로우
-let snsFilter     = 'all';
-
-function onSheetsIdChange() {
-  const id = document.getElementById('sheetsIdInput').value.trim();
-  sessionStorage.setItem('pm_sheets_id', id);
-}
-
-// Sheets → JSON (공개 시트 CSV 방식)
-// ─────────────────────────────────────────────────────────
-//  TikTok · Instagram — Google Sheets 자동 연동
-// ─────────────────────────────────────────────────────────
-const SNS_SHEETS_ID = '1nRSlETZFTft19tERmM1tL2Eyn3H9Z4WnyYR27GJGIWI';
-const SNS_PROXY     = 'https://script.google.com/macros/s/AKfycbx7Sfsgi87goihgEeKpcCHwngCKjB3lijdgcgIMtgO55eyZjYkJ6AaQdIlTrovIMMsX/exec';
-
-async function loadSheetsData() {
-  const btn = document.getElementById('snsLoadBtn');
-  btn.disabled = true;
-  setSheetStatus('loading', '⏳ 시트 불러오는 중...');
-  try {
-    const url  = `${SNS_PROXY}?sheetId=${SNS_SHEETS_ID}`;
-    const res  = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    if (json.error) throw new Error(json.error);
-
-    // 헤더 제외 파싱 — 열: 플랫폼/콘텐츠링크/날짜/조회수/파트너명
-    snsRawData = json.slice(1).map(row => {
-      const platform    = String(row[0] || '').toLowerCase();
-      const link        = String(row[1] || '').trim();
-      const date        = String(row[2] || '').trim();
-      const views       = parseInt(String(row[3] || '0').replace(/,/g, '')) || 0;
-      const partnerName = String(row[4] || '').trim();
-      if (!link && !partnerName) return null;
-      const plat = platform.includes('tiktok') ? 'tiktok'
-                 : platform.includes('instagram') ? 'instagram'
-                 : link.includes('tiktok') ? 'tiktok'
-                 : link.includes('instagram') ? 'instagram'
-                 : platform || 'tiktok';
-      return { platform: plat, link, uploadDate: date, views, partnerName };
-    }).filter(Boolean);
-
-    localStorage.setItem('pm_sns_data', JSON.stringify(snsRawData));
-    setSheetStatus('ok', `✓ ${snsRawData.length}건 로드됨`);
-    document.getElementById('snsBadge').textContent = snsRawData.length;
-    document.getElementById('snsLastUpdate').textContent =
-      '마지막 업데이트: ' + new Date().toLocaleString('ko-KR');
-    renderSnsTable();
-    renderSnsSummary();
-    showToast(`${snsRawData.length}건 데이터 로드 완료`, 'success');
-  } catch(e) {
-    setSheetStatus('error', '✕ ' + e.message);
-    showToast('시트 불러오기 실패: ' + e.message, 'error');
-  } finally {
-    btn.disabled = false;
+// ── 특이사항 ─────────────────────────────
+function rNotice(tab){
+  const el=document.getElementById(tab+'Notices');
+  const notices=[];
+  if(tab==='yt'||tab==='int'){
+    // 비활성 파트너
+    const inactive=ytData.filter(d=>!d.error&&d.uploads===0).map(d=>d.name);
+    if(inactive.length) notices.push({type:'inactive',title:`⚠ 업로드 없음 (${inactive.length}명)`,body:inactive.join(', ')});
+    // 애매한 영상
+    const amb=ytData.reduce((s,d)=>s+(d.pubgmVideos||[]).filter(v=>v.isAmbiguous).length,0);
+    if(amb>0) notices.push({type:'amb',title:`❓ 확인 필요 영상 ${amb}건`,body:'모바일/PC 키워드 혼재. 영상 목록에서 주황색 표시 영상을 확인하세요.'});
+    // 톱 파트너
+    const top=ytData.filter(d=>!d.error).sort((a,b)=>b.uploads-a.uploads)[0];
+    if(top&&top.uploads>0) notices.push({type:'top',title:`🏆 이번 기간 최다 업로드: ${top.name}`,body:`${top.uploads}건 업로드 / ${fn(top.totalViews)} 조회수`});
   }
-}
-
-function setSheetStatus(type, msg) {
-  const el = document.getElementById('sheetsStatus');
-  el.className = 'sheets-status ' + type;
-  el.textContent = msg;
-}
-
-function filterSns(type, btn) {
-  snsFilter = type;
-  document.querySelectorAll('#panel-sns .format-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderSnsTable();
-}
-
-function renderSnsTable() {
-  const search = document.getElementById('snsSearchInput').value.toLowerCase();
-  let data = snsRawData;
-  if (snsFilter !== 'all') data = data.filter(r => r.platform === snsFilter);
-  if (search) data = data.filter(r => r.partnerName.toLowerCase().includes(search));
-
-  const tbody = document.getElementById('snsTableBody');
-  if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="icon">📭</div><p>${snsRawData.length ? '검색 결과가 없습니다.' : '[시트 데이터 불러오기] 버튼을 클릭해주세요.'}</p></div></td></tr>`;
-    return;
+  if(tab==='sns'||tab==='int'){
+    const tt=snsData.filter(r=>r.platform==='tiktok'), ig=snsData.filter(r=>r.platform==='instagram');
+    if(snsData.length>0) notices.push({type:'top',title:`📊 TikTok ${tt.length}건 / Instagram ${ig.length}건`,body:`총 조회수: TikTok ${fn(tt.reduce((s,r)=>s+r.views,0))} / Instagram ${fn(ig.reduce((s,r)=>s+r.views,0))}`});
+    // SNS에 있으나 YT에 없는 파트너
+    if(tab==='int'){
+      const ytNames=new Set(ytData.filter(d=>!d.error).map(d=>d.name));
+      const snsOnly=[...new Set(snsData.map(r=>r.partnerName))].filter(n=>!ytNames.has(n));
+      if(snsOnly.length) notices.push({type:'amb',title:`ℹ SNS 전용 파트너 ${snsOnly.length}명`,body:snsOnly.join(', ')});
+    }
   }
-
-  // 파트너별 콘텐츠 수 집계
-  const countMap = {};
-  data.forEach(r => {
-    const key = `${r.partnerName}_${r.platform}_${r.uploadDate}`;
-    if (!countMap[r.partnerName]) countMap[r.partnerName] = 0;
-    countMap[r.partnerName]++;
-  });
-
-  tbody.innerHTML = data.map(r => {
-    const platPill = r.platform === 'tiktok'
-      ? `<span class="platform-pill tiktok">🎵 TikTok</span>`
-      : `<span class="platform-pill instagram">📸 Instagram</span>`;
-    const linkHtml = r.link
-      ? `<a href="${r.link}" target="_blank" style="color:var(--cyan);font-size:11px;text-decoration:none">🔗 링크</a>`
-      : '—';
-    const viewsHtml = r.views
-      ? `<span class="metric-cell" style="color:var(--cyan)">${fmtNum(r.views)}</span>`
-      : `<span style="color:var(--text-muted);font-size:11px">—</span>`;
-    return `<tr>
-      <td style="font-weight:500">${r.partnerName || '—'}</td>
-      <td>${platPill}</td>
-      <td>${linkHtml}</td>
-      <td style="font-size:12px;color:var(--text-dim)">${r.uploadDate || '—'}</td>
-      <td>${viewsHtml}</td>
-      <td class="metric-cell">${countMap[r.partnerName] || 1}</td>
-    </tr>`;
-  }).join('');
+  if(!notices.length){el.innerHTML='<div class="notice-empty">특이사항 없음</div>';return;}
+  el.innerHTML=`<div class="notice-grid">${notices.map(n=>`<div class="notice-item ${n.type}"><div class="ni-title">${n.title}</div><div style="color:var(--dim);font-size:11px">${n.body}</div></div>`).join('')}</div>`;
 }
 
-function renderSnsSummary() {
-  if (!snsRawData.length) return;
-  document.getElementById('snsSummaryCards').style.display = 'grid';
-
-  const tt = snsRawData.filter(r => r.platform === 'tiktok');
-  const ig = snsRawData.filter(r => r.platform === 'instagram');
-  const partners = [...new Set(snsRawData.map(r => r.partnerName).filter(Boolean))];
-
-  document.getElementById('snsTtViews').textContent = fmtNum(tt.reduce((s,r) => s+r.views, 0));
-  document.getElementById('snsTtCount').textContent = `${tt.length}건`;
-  document.getElementById('snsIgViews').textContent = fmtNum(ig.reduce((s,r) => s+r.views, 0));
-  document.getElementById('snsIgCount').textContent = `${ig.length}건`;
-  document.getElementById('snsPubgmCount').textContent = snsRawData.length;
-  document.getElementById('snsTotalCount').textContent  = partners.length + '명';
-}
-
-
-
-// ─────────────────────────────────────────────────────────
-//  통합 현황 렌더
-// ─────────────────────────────────────────────────────────
-function renderIntegrated() {
-  const hasYt  = tableData.length > 0;
-  const hasSns = snsRawData.length > 0;
-
-  if (!hasYt && !hasSns) {
-    document.getElementById('integratedEmpty').style.display = 'block';
-    document.getElementById('integratedContent').style.display = 'none';
-    return;
-  }
-  document.getElementById('integratedEmpty').style.display = 'none';
-  document.getElementById('integratedContent').style.display = 'block';
-
-  // YouTube 집계
-  const ytViews   = tableData.reduce((s,d) => s + (d.totalViews||0), 0);
-  const ytUploads = tableData.reduce((s,d) => s + (d.weeklyPubgm||0), 0);
-
-  // SNS 집계
-  const tt = snsRawData.filter(r => r.platform === 'tiktok');
-  const ig = snsRawData.filter(r => r.platform === 'instagram');
-  const ttViews = tt.reduce((s,r) => s+r.views, 0);
-  const igViews = ig.reduce((s,r) => s+r.views, 0);
-  const ttPubgm = tt.filter(r=>r.isPubgm).length;
-  const igPubgm = ig.filter(r=>r.isPubgm).length;
-
-  // 카드
-  document.getElementById('int-yt-partners').textContent = tableData.filter(d=>!d.error).length;
-  document.getElementById('int-yt-views').textContent    = fmtNum(ytViews);
-  document.getElementById('int-yt-uploads').textContent  = ytUploads;
-  document.getElementById('int-tt-count').textContent    = tt.length;
-  document.getElementById('int-tt-views').textContent    = fmtNum(ttViews);
-  document.getElementById('int-tt-pubgm').textContent    = ttPubgm;
-  document.getElementById('int-ig-count').textContent    = ig.length;
-  document.getElementById('int-ig-views').textContent    = fmtNum(igViews);
-  document.getElementById('int-ig-pubgm').textContent    = igPubgm;
-
-  // 비율 바
-  const totalViews = ytViews + ttViews + igViews || 1;
-  const setPct = (id, val) => {
-    document.getElementById(id).style.width = (val/totalViews*100).toFixed(1) + '%';
-  };
-  setPct('bar-yt', ytViews); setPct('bar-tt', ttViews); setPct('bar-ig', igViews);
-  document.getElementById('barval-yt').textContent = fmtNum(ytViews);
-  document.getElementById('barval-tt').textContent = fmtNum(ttViews);
-  document.getElementById('barval-ig').textContent = fmtNum(igViews);
-
-  // 파트너별 통합 테이블
-  const allNames = [
-    ...new Set([
-      ...tableData.filter(d=>!d.error).map(d => d.title || d.name),
-      ...snsRawData.map(r => r.partnerName),
-    ])
-  ];
-
-  const snsMap = {};
-  snsRawData.forEach(r => {
-    if (!snsMap[r.partnerName]) snsMap[r.partnerName] = { tt:[], ig:[] };
-    if (r.platform === 'tiktok') snsMap[r.partnerName].tt.push(r);
-    else                         snsMap[r.partnerName].ig.push(r);
-  });
-
-  const ytMap = {};
-  tableData.filter(d=>!d.error).forEach(d => {
-    ytMap[d.title || d.name] = d;
-  });
-
-  const rows = allNames.map(name => {
-    const yt  = ytMap[name];
-    const sns = snsMap[name] || { tt:[], ig:[] };
-    const ttV = sns.tt.reduce((s,r)=>s+r.views,0);
-    const igV = sns.ig.reduce((s,r)=>s+r.views,0);
-    const ytV = yt ? yt.totalViews : 0;
-    const total = ytV + ttV + igV;
-    return { name, ytV, ytU: yt ? yt.weeklyPubgm : 0, ttV, ttC: sns.tt.length, igV, igC: sns.ig.length, total };
-  }).sort((a,b) => b.total - a.total);
-
-  document.getElementById('intTableBody').innerHTML = rows.map(r => `
-    <tr>
-      <td style="font-weight:500">${r.name}</td>
-      <td class="metric-cell" style="color:#ff6666">${fmtNum(r.ytV)}</td>
-      <td class="metric-cell">${r.ytU}</td>
-      <td class="metric-cell" style="color:var(--cyan)">${fmtNum(r.ttV)}</td>
-      <td style="color:var(--text-muted);font-size:12px">${r.ttC}건</td>
-      <td class="metric-cell" style="color:#e1306c">${fmtNum(r.igV)}</td>
-      <td style="color:var(--text-muted);font-size:12px">${r.igC}건</td>
-      <td class="metric-cell" style="color:var(--gold);font-weight:700">${fmtNum(r.total)}</td>
-    </tr>`).join('');
-}
-
+// ── 유틸 ─────────────────────────────────
+function fn(n){if(!n)return'0';if(n>=100000000)return(n/100000000).toFixed(1)+'억';if(n>=10000)return(n/10000).toFixed(1)+'만';return n.toLocaleString('ko-KR');}
+function toast(msg,type=''){const el=document.getElementById('toast');el.textContent=msg;el.className='toast '+(type==='ok'?'ok':type==='err'?'err':'')+' show';setTimeout(()=>el.classList.remove('show'),3000);}
 </script>
 </body>
 </html>
