@@ -465,35 +465,50 @@ async function getVStats(ids){
   return d.items||[];
 }
 
-async function getVids(chId,after,before){
-  // search API 대신 채널의 모든 영상을 수집 후 로컬 필터링 → 누락 방지
-  // 1단계: search로 기간 내 모든 영상 ID 수집 (페이지 제한 없이 끝까지)
-  let items=[],pt;
-  let pageCount=0;
-  while(true){
-    const ps={part:'id',channelId:chId,order:'date',maxResults:50,type:'video',
-      publishedAfter:after,publishedBefore:before,...(pt?{pageToken:pt}:{})};
-    const d=await ytFetch('search',ps);
-    items=items.concat(d.items||[]);
-    pageCount++;
-    if(!d.nextPageToken||!d.items?.length||pageCount>=10)break; // 최대 500건
-    pt=d.nextPageToken;
-  }
-  if(!items.length)return[];
+// 채널 ID → 업로드 재생목록 ID 변환 (UC... → UU...)
+function uploadsPlaylistId(chId){ return 'UU'+chId.slice(2); }
 
-  // 2단계: videos API로 실제 메타데이터 수집 (제목+설명 포함) — 50개씩 배치
-  const ids=[...new Set(items.map(i=>i.id?.videoId||(typeof i.id==='string'?i.id:null)).filter(Boolean))];
+async function getVids(chId,after,before){
+  // playlistItems API로 채널 업로드 재생목록에서 직접 수집 → search보다 완전함
+  const playlistId = uploadsPlaylistId(chId);
+  const afterDate  = new Date(after);
+  const beforeDate = new Date(before);
+  let ids=[], pt, done=false;
+
+  while(!done){
+    const ps={part:'contentDetails',playlistId,maxResults:50,...(pt?{pageToken:pt}:{})};
+    const d=await ytFetch('playlistItems',ps);
+    const batch=d.items||[];
+
+    for(const item of batch){
+      const vid=item.contentDetails?.videoId;
+      const pubAt=new Date(item.contentDetails?.videoPublishedAt||'');
+      if(!vid)continue;
+      // 기간 초과(너무 오래된 영상) → 더 이상 볼 필요 없음
+      if(pubAt < afterDate){ done=true; break; }
+      // 기간 내 영상만 수집
+      if(pubAt <= beforeDate) ids.push(vid);
+    }
+
+    if(!d.nextPageToken||!batch.length) break;
+    if(!done) pt=d.nextPageToken;
+  }
+
+  if(!ids.length)return[];
+
+  // videos API로 메타데이터 수집 (제목+설명+통계+길이)
   const stats=[]; for(let i=0;i<ids.length;i+=50)stats.push(...await getVStats(ids.slice(i,i+50)));
 
-  // 3단계: 로컬에서 PUBGM 키워드 필터링 (제목+설명 기준 — 누락 없음)
+  // 로컬에서 PUBGM 키워드 필터링
   return stats.map(v=>{
     const t=(v.snippet?.title||'')+' '+(v.snippet?.description||'');
+    const dur=v.contentDetails?.duration||'';
     return{id:v.id,title:v.snippet?.title||'',publishedAt:v.snippet?.publishedAt||'',
       thumbnail:v.snippet?.thumbnails?.medium?.url||v.snippet?.thumbnails?.default?.url,
       viewCount:parseInt(v.statistics?.viewCount||0),likeCount:parseInt(v.statistics?.likeCount||0),
-      commentCount:parseInt(v.statistics?.commentCount||0),durationSecs:pDur(v.contentDetails?.duration),
-      isShorts:isSh(v.contentDetails?.duration,t),isPubgm:isPG(t),isAmbiguous:cls(t)==='ambiguous'};
-  }).filter(v=>v.publishedAt); // 유효한 영상만
+      commentCount:parseInt(v.statistics?.commentCount||0),durationSecs:pDur(dur),
+      isShorts:isSh(dur,t),isPubgm:isPG(t),isAmbiguous:cls(t)==='ambiguous'};
+  }).filter(v=>v.publishedAt);
 }
 
 async function fetchAll(){
