@@ -808,17 +808,26 @@ function switchDM(m,btn,tab){
 }
 
 function rDailyChart(tab, dr){
-  const dr2=dr||getDR();
   const canvasId=tab+'Chart', xlabelId=tab+'XLabels', legendId=tab+'Legend';
   const canvas=document.getElementById(canvasId); if(!canvas)return;
   const metric=tab==='yt'?ytDM:tab==='sns'?snsDM:intDM;
 
-  // 날짜 범위 생성
-  let allDates=[];
-  if(dr2){
-    const s=new Date(dr2.after.slice(0,10)), e=new Date(dr2.before.slice(0,10));
-    for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1)) allDates.push(d.toLocaleDateString('sv-SE'));
+  // 날짜 범위 — 전달된 dr 우선, 없으면 getDR(), 그래도 없으면 YouTube/SNS 데이터에서 자동 추출
+  let dr2=dr||getDR();
+  if(!dr2){
+    // 데이터에서 날짜 범위 자동 추출
+    const allRaw=[];
+    ytData.filter(d=>!d.error).forEach(d=>(d.pubgmVideos||[]).forEach(v=>allRaw.push(v.publishedAt.slice(0,10))));
+    snsData.forEach(r=>{ const nd=normDate(r.uploadDate); if(nd)allRaw.push(nd); });
+    if(!allRaw.length){canvas.style.height='0';return;}
+    allRaw.sort();
+    dr2={after:allRaw[0]+'T00:00:00Z',before:allRaw[allRaw.length-1]+'T23:59:59Z',label:'전체'};
   }
+
+  // 날짜 범위 생성 (조회 기간 전체 연속 날짜)
+  let allDates=[];
+  const s=new Date(dr2.after.slice(0,10)), e=new Date(dr2.before.slice(0,10));
+  for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1)) allDates.push(d.toLocaleDateString('sv-SE'));
   if(!allDates.length){canvas.style.height='0';return;}
   canvas.style.height='180px';
 
