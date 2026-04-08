@@ -393,6 +393,23 @@ let partners = JSON.parse(localStorage.getItem('pm_partners')||'null') || [
   {name:'오살',handle:'@pubgmosal'}
 ];
 let ytData=[], snsData=[], sf='all', sk='weekly', sd=-1;
+
+// 날짜 문자열을 YYYY-MM-DD 형식으로 정규화
+function normDate(s){
+  if(!s)return'';
+  const str=String(s).trim();
+  // 이미 YYYY-MM-DD 형식
+  if(/^\d{4}-\d{2}-\d{2}/.test(str))return str.slice(0,10);
+  // YYYY.MM.DD 또는 YYYY/MM/DD
+  if(/^\d{4}[./]\d{2}[./]\d{2}/.test(str))return str.slice(0,10).replace(/[./]/g,'-');
+  // MM/DD/YYYY 또는 MM.DD.YYYY
+  const m=str.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})/);
+  if(m)return `${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+  // Date 객체로 파싱 시도
+  const d=new Date(str);
+  if(!isNaN(d))return d.toLocaleDateString('sv-SE');
+  return str.slice(0,10);
+}
 let ytDM='uploads', snsDM='uploads', intDM='uploads';
 
 // ── 초기화 ────────────────────────────────
@@ -404,9 +421,11 @@ window.onload = () => {
   document.getElementById('dateTo').value   = t.toLocaleDateString('sv-SE');
   document.getElementById('dateFrom').value = f.toLocaleDateString('sv-SE');
   const s = localStorage.getItem('pm_sns_data');
-  if(s){ snsData=JSON.parse(s); rSnsAll(); }
-  // 초기 통합현황 차트 렌더 (패널 표시 후)
-  requestAnimationFrame(()=>{ rIntAll(); });
+  if(s){
+    snsData=JSON.parse(s);
+    rSnsAll();
+    requestAnimationFrame(()=>{ rIntAll(); });
+  }
 };
 
 function saveApiKey(){ const k=document.getElementById('apiKeyInput').value.trim(); localStorage.setItem('pm_apikey',k); setSaved(!!k); }
@@ -819,7 +838,7 @@ function rDailyChart(tab, dr){
     snsPartners.forEach((name,pi)=>{
       const color=tab==='int'?COLORS[(ytData.length+pi)%COLORS.length]:COLORS[pi%COLORS.length];
       const vals=allDates.map(date=>{
-        const rows=snsData.filter(r=>r.partnerName===name&&r.uploadDate===date);
+        const rows=snsData.filter(r=>r.partnerName===name&&normDate(r.uploadDate)===date);
         return metric==='uploads'?rows.length:rows.reduce((s,r)=>s+r.views,0);
       });
       datasets.push({name,color,vals,isSns:true});
