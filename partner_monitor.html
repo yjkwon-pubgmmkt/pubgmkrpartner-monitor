@@ -1238,37 +1238,21 @@
   ════════════════════════════════════ -->
   <div class="tab-panel" id="panel-sns">
 
-    <!-- Sheets 연동 설정 -->
+    <!-- Sheets 자동 연동 -->
     <div class="sheets-setup">
-      <div class="section-title">데이터 업로드</div>
+      <div class="section-title">Google Sheets 자동 연동</div>
       <div class="setup-row">
-        <!-- 파일 업로드 버튼 -->
-        <label for="csvFileInput" class="btn btn-primary" style="cursor:pointer">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          CSV 파일 업로드
-        </label>
-        <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="loadCsvFile(event)">
-
-        <!-- 드래그앤드롭 영역 -->
-        <div id="dropZone"
-          style="flex:1; min-width:200px; height:36px; border:1px dashed var(--border); border-radius:6px;
-                 display:flex; align-items:center; justify-content:center; font-size:12px;
-                 color:var(--text-muted); cursor:pointer; transition:all 0.2s"
-          onclick="document.getElementById('csvFileInput').click()"
-          ondragover="event.preventDefault(); this.style.borderColor='var(--gold-dim)'; this.style.color='var(--gold)'"
-          ondragleave="this.style.borderColor='var(--border)'; this.style.color='var(--text-muted)'"
-          ondrop="onCsvDrop(event)">
-          여기에 CSV 파일을 드래그하거나 클릭하세요
-        </div>
+        <button class="btn btn-primary" onclick="loadSheetsData()" id="snsLoadBtn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+          시트 데이터 불러오기
+        </button>
         <span class="sheets-status" id="sheetsStatus"></span>
+        <span id="snsLastUpdate" style="font-size:11px;color:var(--text-muted);margin-left:auto"></span>
       </div>
-
       <div class="sheets-help">
-        <b>📋 CSV 내보내기 방법</b><br>
-        1. Google Sheets에서 <b>파일 → 다운로드 → 쉼표로 구분된 값(.csv)</b> 클릭<br>
-        2. <b>"파트너 제출 데이터"</b> 시트가 선택된 상태에서 다운로드<br>
-        3. 다운로드된 CSV 파일을 위 업로드 버튼으로 불러오기<br>
-        4. 데이터 업데이트 시 동일한 방법으로 새 CSV를 다시 업로드하면 반영됩니다
+        <b>📋 연동된 스프레드시트</b><br>
+        시트 열 구조: <b>플랫폼 / 콘텐츠 링크 / 날짜 / 조회수 / 파트너명</b><br>
+        [시트 데이터 불러오기] 버튼을 클릭하면 최신 데이터를 자동으로 가져옵니다.
       </div>
     </div>
 
@@ -1291,20 +1275,16 @@
       <table class="sns-table">
         <thead>
           <tr>
-            <th>파트너 닉네임</th>
+            <th>파트너명</th>
             <th>플랫폼</th>
-            <th>캠페인</th>
             <th>콘텐츠 링크</th>
-            <th>업로드 날짜</th>
+            <th>날짜</th>
             <th>조회수</th>
-            <th>좋아요</th>
-            <th>댓글</th>
-            <th>PUBGM</th>
-            <th>제출 시각</th>
+            <th>콘텐츠 수</th>
           </tr>
         </thead>
         <tbody id="snsTableBody">
-          <tr><td colspan="10"><div class="empty-state"><div class="icon">📊</div><p>Google Sheets ID를 입력하고<br>[시트 불러오기]를 클릭해주세요.</p></div></td></tr>
+          <tr><td colspan="6"><div class="empty-state"><div class="icon">📊</div><p>[시트 데이터 불러오기] 버튼을 클릭하면<br>최신 데이터를 자동으로 가져옵니다.</p></div></td></tr>
         </tbody>
       </table>
     </div>
@@ -1323,14 +1303,14 @@
         <div class="card-sub" id="snsIgCount">0건</div>
       </div>
       <div class="card green">
-        <div class="card-label">PUBGM 관련 콘텐츠</div>
+        <div class="card-label">총 콘텐츠 수</div>
         <div class="card-value" id="snsPubgmCount">—</div>
         <div class="card-sub">TikTok + Instagram</div>
       </div>
       <div class="card gold">
-        <div class="card-label">총 제출 건수</div>
+        <div class="card-label">참여 파트너 수</div>
         <div class="card-value" id="snsTotalCount">—</div>
-        <div class="card-sub">전체 파트너 합산</div>
+        <div class="card-sub">고유 파트너 합산</div>
       </div>
     </div>
 
@@ -1503,7 +1483,7 @@ window.onload = () => {
   document.getElementById('dateFrom').value = from.toISOString().slice(0, 10);
 
   // SNS 캐시 복원
-  const cachedSns = sessionStorage.getItem('pm_sns_data');
+  const cachedSns = localStorage.getItem('pm_sns_data');
   if (cachedSns) {
     snsRawData = JSON.parse(cachedSns);
     document.getElementById('snsBadge').textContent = snsRawData.length;
@@ -1928,8 +1908,7 @@ function switchDailyMetric(metric, btn) {
 }
 
 function buildDailyData() {
-  // 전체 영상에서 날짜별 집계
-  const dayMap = {}; // { 'YYYY-MM-DD': { uploads: N, views: N, byPartner: { name: {u,v} } } }
+  const dayMap = {};
 
   tableData.filter(d => !d.error).forEach((d, pi) => {
     (d.videos || []).filter(v => v.isPubgm).forEach(v => {
@@ -1943,8 +1922,24 @@ function buildDailyData() {
     });
   });
 
-  // 날짜 정렬
-  const dates = Object.keys(dayMap).sort();
+  // 조회 기간 전체를 연속 날짜로 채우기 (영상 없는 날 = 0)
+  const dr = getDateRange();
+  if (!dr) {
+    const dates = Object.keys(dayMap).sort();
+    return { dates, dayMap };
+  }
+  const start = new Date(dr.publishedAfter.slice(0, 10));
+  const end   = new Date(dr.publishedBefore.slice(0, 10));
+  const allDates = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    allDates.push(d.toLocaleDateString('sv-SE'));
+  }
+  // 영상 없는 날짜도 빈 객체로 채우기
+  allDates.forEach(day => {
+    if (!dayMap[day]) dayMap[day] = { uploads: 0, views: 0, byPartner: {} };
+  });
+
+  const dates = allDates;
   return { dates, dayMap };
 }
 
@@ -2045,12 +2040,11 @@ function renderDailyTrend() {
   });
   ctx.stroke();
 
-  // 데이터 포인트
+  // 데이터 포인트 (0인 날도 작은 점으로 표시)
   totalValues.forEach((v, i) => {
-    if (v === 0) return;
     ctx.beginPath();
-    ctx.arc(xPos(i), yPos(v), 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = '#f7b731';
+    ctx.arc(xPos(i), yPos(v), v > 0 ? 3.5 : 2, 0, Math.PI * 2);
+    ctx.fillStyle = v > 0 ? '#f7b731' : 'rgba(247,183,49,0.3)';
     ctx.fill();
   });
 
@@ -2488,97 +2482,59 @@ function onSheetsIdChange() {
 }
 
 // Sheets → JSON (공개 시트 CSV 방식)
-// CSV 파일 드롭 처리
-function onCsvDrop(event) {
-  event.preventDefault();
-  const dropZone = document.getElementById('dropZone');
-  dropZone.style.borderColor = 'var(--border)';
-  dropZone.style.color = 'var(--text-muted)';
-  const file = event.dataTransfer.files[0];
-  if (file) processCsvFile(file);
-}
+// ─────────────────────────────────────────────────────────
+//  TikTok · Instagram — Google Sheets 자동 연동
+// ─────────────────────────────────────────────────────────
+const SNS_SHEETS_ID = '1nRSlETZFTft19tERmM1tL2Eyn3H9Z4WnyYR27GJGIWI';
+const SNS_PROXY     = 'https://script.google.com/macros/s/AKfycbx7Sfsgi87goihgEeKpcCHwngCKjB3lijdgcgIMtgO55eyZjYkJ6AaQdIlTrovIMMsX/exec';
 
-// 파일 input 변경 처리
-function loadCsvFile(event) {
-  const file = event.target.files[0];
-  if (file) processCsvFile(file);
-}
-
-// CSV 파일 읽기 및 파싱
-function processCsvFile(file) {
-  if (!file.name.endsWith('.csv')) {
-    showToast('CSV 파일만 업로드 가능합니다', 'error'); return;
-  }
-  setSheetStatus('loading', '⏳ 읽는 중...');
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const csv = e.target.result;
-      snsRawData = parseSheetsCsv(csv);
-      sessionStorage.setItem('pm_sns_data', JSON.stringify(snsRawData));
-      setSheetStatus('ok', `✓ ${snsRawData.length}건 로드됨 (${file.name})`);
-      document.getElementById('snsBadge').textContent = snsRawData.length;
-      // 드롭존 텍스트 업데이트
-      document.getElementById('dropZone').textContent = `✓ ${file.name} (${snsRawData.length}건)`;
-      document.getElementById('dropZone').style.color = 'var(--green)';
-      document.getElementById('dropZone').style.borderColor = 'rgba(46,204,113,0.4)';
-      renderSnsTable();
-      renderSnsSummary();
-      showToast(`${snsRawData.length}건 데이터 로드 완료`, 'success');
-    } catch(err) {
-      setSheetStatus('error', '✕ 파싱 오류: ' + err.message);
-      showToast('CSV 파싱 중 오류가 발생했습니다', 'error');
-    }
-  };
-  reader.onerror = () => {
-    setSheetStatus('error', '✕ 파일 읽기 실패');
-    showToast('파일을 읽을 수 없습니다', 'error');
-  };
-  reader.readAsText(file, 'UTF-8');
-}
-
-// 사용 안 함 (호환성 유지)
-function onSheetsIdChange() {}
 async function loadSheetsData() {
-  showToast('CSV 파일 업로드 방식을 사용해주세요', 'error');
+  const btn = document.getElementById('snsLoadBtn');
+  btn.disabled = true;
+  setSheetStatus('loading', '⏳ 시트 불러오는 중...');
+  try {
+    const url  = `${SNS_PROXY}?sheetId=${SNS_SHEETS_ID}`;
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (json.error) throw new Error(json.error);
+
+    // 헤더 제외 파싱 — 열: 플랫폼/콘텐츠링크/날짜/조회수/파트너명
+    snsRawData = json.slice(1).map(row => {
+      const platform    = String(row[0] || '').toLowerCase();
+      const link        = String(row[1] || '').trim();
+      const date        = String(row[2] || '').trim();
+      const views       = parseInt(String(row[3] || '0').replace(/,/g, '')) || 0;
+      const partnerName = String(row[4] || '').trim();
+      if (!link && !partnerName) return null;
+      const plat = platform.includes('tiktok') ? 'tiktok'
+                 : platform.includes('instagram') ? 'instagram'
+                 : link.includes('tiktok') ? 'tiktok'
+                 : link.includes('instagram') ? 'instagram'
+                 : platform || 'tiktok';
+      return { platform: plat, link, uploadDate: date, views, partnerName };
+    }).filter(Boolean);
+
+    localStorage.setItem('pm_sns_data', JSON.stringify(snsRawData));
+    setSheetStatus('ok', `✓ ${snsRawData.length}건 로드됨`);
+    document.getElementById('snsBadge').textContent = snsRawData.length;
+    document.getElementById('snsLastUpdate').textContent =
+      '마지막 업데이트: ' + new Date().toLocaleString('ko-KR');
+    renderSnsTable();
+    renderSnsSummary();
+    showToast(`${snsRawData.length}건 데이터 로드 완료`, 'success');
+  } catch(e) {
+    setSheetStatus('error', '✕ ' + e.message);
+    showToast('시트 불러오기 실패: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function setSheetStatus(type, msg) {
   const el = document.getElementById('sheetsStatus');
   el.className = 'sheets-status ' + type;
   el.textContent = msg;
-}
-
-// CSV 파싱 (구글 시트 CSV 포맷)
-function parseSheetsCsv(csv) {
-  const lines = csv.trim().split('\n');
-  if (lines.length < 2) return [];
-  // 새 열 구조:
-  // A(0): 타임스탬프  B(1): 콘텐츠 링크  C(2): 업로드 날짜  D(3): 캠페인명
-  // E(4): 플랫폼(자동)  F(5): 닉네임(자동)  G(6): 조회수  H(7): 좋아요  I(8): 댓글  J(9): PUBGM 여부
-  return lines.slice(1).map(line => {
-    const cols = line.match(/(".*?"|[^,]+)(?=,|$)/g) || [];
-    const clean = c => (c || '').replace(/^"|"$/g, '').trim();
-    const link = clean(cols[1]);
-    const platformRaw = clean(cols[4]);
-    const platform = platformRaw.toLowerCase().includes('tiktok') ? 'tiktok'
-                   : platformRaw.toLowerCase().includes('instagram') ? 'instagram'
-                   : link.includes('tiktok') ? 'tiktok'
-                   : link.includes('instagram') ? 'instagram'
-                   : 'tiktok';
-    return {
-      timestamp:   clean(cols[0]),
-      link,
-      uploadDate:  clean(cols[2]),
-      campaign:    clean(cols[3]),
-      platform,
-      partnerName: clean(cols[5]) || '—',
-      views:       parseInt(clean(cols[6])?.replace(/,/g, '') || 0),
-      likes:       parseInt(clean(cols[7])?.replace(/,/g, '') || 0),
-      comments:    parseInt(clean(cols[8])?.replace(/,/g, '') || 0),
-      isPubgm:     /예|yes|true|y/i.test(clean(cols[9])),
-    };
-  }).filter(r => r.link);
 }
 
 function filterSns(type, btn) {
@@ -2596,40 +2552,35 @@ function renderSnsTable() {
 
   const tbody = document.getElementById('snsTableBody');
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="icon">📭</div><p>${snsRawData.length ? '검색 결과가 없습니다.' : 'Google Sheets ID를 입력하고<br>[시트 불러오기]를 클릭해주세요.'}</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="icon">📭</div><p>${snsRawData.length ? '검색 결과가 없습니다.' : '[시트 데이터 불러오기] 버튼을 클릭해주세요.'}</p></div></td></tr>`;
     return;
   }
+
+  // 파트너별 콘텐츠 수 집계
+  const countMap = {};
+  data.forEach(r => {
+    const key = `${r.partnerName}_${r.platform}_${r.uploadDate}`;
+    if (!countMap[r.partnerName]) countMap[r.partnerName] = 0;
+    countMap[r.partnerName]++;
+  });
 
   tbody.innerHTML = data.map(r => {
     const platPill = r.platform === 'tiktok'
       ? `<span class="platform-pill tiktok">🎵 TikTok</span>`
       : `<span class="platform-pill instagram">📸 Instagram</span>`;
-    const pubgmBadge = r.isPubgm
-      ? `<span class="weekly-badge good" style="font-size:11px">PUBGM</span>`
-      : `<span style="color:var(--text-muted);font-size:12px">—</span>`;
     const linkHtml = r.link
-      ? `<a href="${r.link}" target="_blank" style="color:var(--cyan);font-size:11px;text-decoration:none" onclick="event.stopPropagation()">🔗 링크</a>`
+      ? `<a href="${r.link}" target="_blank" style="color:var(--cyan);font-size:11px;text-decoration:none">🔗 링크</a>`
       : '—';
     const viewsHtml = r.views
       ? `<span class="metric-cell" style="color:var(--cyan)">${fmtNum(r.views)}</span>`
-      : `<span style="color:var(--text-muted);font-size:11px">미입력</span>`;
-    const likesHtml = r.likes
-      ? fmtNum(r.likes)
-      : `<span style="color:var(--text-muted);font-size:11px">—</span>`;
-    const commentsHtml = r.comments
-      ? fmtNum(r.comments)
       : `<span style="color:var(--text-muted);font-size:11px">—</span>`;
     return `<tr>
-      <td style="font-weight:500">${r.partnerName}</td>
+      <td style="font-weight:500">${r.partnerName || '—'}</td>
       <td>${platPill}</td>
-      <td style="font-size:11px;color:var(--text-dim)">${r.campaign || '—'}</td>
       <td>${linkHtml}</td>
       <td style="font-size:12px;color:var(--text-dim)">${r.uploadDate || '—'}</td>
       <td>${viewsHtml}</td>
-      <td class="metric-cell">${likesHtml}</td>
-      <td class="metric-cell">${commentsHtml}</td>
-      <td>${pubgmBadge}</td>
-      <td style="font-size:11px;color:var(--text-muted)">${r.timestamp || '—'}</td>
+      <td class="metric-cell">${countMap[r.partnerName] || 1}</td>
     </tr>`;
   }).join('');
 }
@@ -2640,15 +2591,17 @@ function renderSnsSummary() {
 
   const tt = snsRawData.filter(r => r.platform === 'tiktok');
   const ig = snsRawData.filter(r => r.platform === 'instagram');
-  const pubgm = snsRawData.filter(r => r.isPubgm);
+  const partners = [...new Set(snsRawData.map(r => r.partnerName).filter(Boolean))];
 
-  document.getElementById('snsTtViews').textContent  = fmtNum(tt.reduce((s,r) => s+r.views, 0));
-  document.getElementById('snsTtCount').textContent  = `${tt.length}건`;
-  document.getElementById('snsIgViews').textContent  = fmtNum(ig.reduce((s,r) => s+r.views, 0));
-  document.getElementById('snsIgCount').textContent  = `${ig.length}건`;
-  document.getElementById('snsPubgmCount').textContent = pubgm.length;
-  document.getElementById('snsTotalCount').textContent  = snsRawData.length;
+  document.getElementById('snsTtViews').textContent = fmtNum(tt.reduce((s,r) => s+r.views, 0));
+  document.getElementById('snsTtCount').textContent = `${tt.length}건`;
+  document.getElementById('snsIgViews').textContent = fmtNum(ig.reduce((s,r) => s+r.views, 0));
+  document.getElementById('snsIgCount').textContent = `${ig.length}건`;
+  document.getElementById('snsPubgmCount').textContent = snsRawData.length;
+  document.getElementById('snsTotalCount').textContent  = partners.length + '명';
 }
+
+
 
 // ─────────────────────────────────────────────────────────
 //  통합 현황 렌더
