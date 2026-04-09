@@ -66,6 +66,7 @@ main{position:relative;z-index:1;padding:24px 32px;max-width:1600px;margin:0 aut
 .chart-legend{display:flex;gap:12px;flex-wrap:wrap;margin-left:auto;font-size:10px;color:var(--muted);align-items:center}
 .chart-wrap{position:relative;height:180px}
 .chart-xlabels{display:flex;justify-content:space-between;margin-top:5px;font-size:9px;color:var(--muted);padding:0 2px}
+.chart-wrap{cursor:crosshair}
 
 /* ── Row 3: Top/Bottom Partners ── */
 .row3{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
@@ -225,8 +226,9 @@ tr.drow:hover td{background:rgba(247,183,49,.02)}
       <button class="ftab active" onclick="switchDM('uploads',this,'yt')">업로드 수</button>
       <button class="ftab" onclick="switchDM('views',this,'yt')">조회수</button>
       <div class="chart-legend" id="ytLegend"></div>
+      <button class="ftab" onclick="exTrendCSV('yt')" style="margin-left:8px;white-space:nowrap">CSV</button>
     </div>
-    <div class="chart-wrap"><canvas id="ytChart"></canvas></div>
+    <div class="chart-wrap" style="position:relative"><canvas id="ytChart"></canvas><div id="ytTooltip" style="display:none;position:absolute;top:0;left:0;background:rgba(8,12,16,.92);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:11px;pointer-events:none;min-width:140px;z-index:10"></div></div>
     <div class="chart-xlabels" id="ytXLabels"></div>
   </div>
   <!-- Row 3 -->
@@ -286,8 +288,9 @@ tr.drow:hover td{background:rgba(247,183,49,.02)}
       <button class="ftab active" onclick="switchDM('uploads',this,'sns')">업로드 수</button>
       <button class="ftab" onclick="switchDM('views',this,'sns')">조회수</button>
       <div class="chart-legend" id="snsLegend"></div>
+      <button class="ftab" onclick="exTrendCSV('sns')" style="margin-left:8px;white-space:nowrap">CSV</button>
     </div>
-    <div class="chart-wrap"><canvas id="snsChart"></canvas></div>
+    <div class="chart-wrap" style="position:relative"><canvas id="snsChart"></canvas><div id="snsTooltip" style="display:none;position:absolute;top:0;left:0;background:rgba(8,12,16,.92);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:11px;pointer-events:none;min-width:140px;z-index:10"></div></div>
     <div class="chart-xlabels" id="snsXLabels"></div>
   </div>
   <!-- Row 3 -->
@@ -346,8 +349,9 @@ tr.drow:hover td{background:rgba(247,183,49,.02)}
       <button class="ftab active" onclick="switchDM('uploads',this,'int')">업로드 수</button>
       <button class="ftab" onclick="switchDM('views',this,'int')">조회수</button>
       <div class="chart-legend" id="intLegend"></div>
+      <button class="ftab" onclick="exTrendCSV('int')" style="margin-left:8px;white-space:nowrap">CSV</button>
     </div>
-    <div class="chart-wrap"><canvas id="intChart"></canvas></div>
+    <div class="chart-wrap" style="position:relative"><canvas id="intChart"></canvas><div id="intTooltip" style="display:none;position:absolute;top:0;left:0;background:rgba(8,12,16,.92);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:11px;pointer-events:none;min-width:140px;z-index:10"></div></div>
     <div class="chart-xlabels" id="intXLabels"></div>
   </div>
   <!-- Row 3 -->
@@ -919,14 +923,64 @@ function rDailyChart(tab, dr){
     ${svgParts.join('')}
   </svg>`;
 
+  // 마우스 오버레이 rect (투명) — 툴팁용
+  const overlayRects=allDates.map((date,i)=>{
+    const x=xP(i)-cW/(2*(n-1||1));
+    const w=n>1?cW/(n-1):cW;
+    return `<rect x="${x}" y="${pT}" width="${w}" height="${cH}" fill="transparent" data-i="${i}"/>`;
+  }).join('');
+  const svgHtmlFull=svgHtml.replace('</svg>',`<g class="overlay">${overlayRects}</g></svg>`);
+
+  // 툴팁 데이터 저장
+  canvas._chartData={allDates,datasets,totalVals,metric};
+
   // canvas 대신 SVG 삽입
   canvas.style.display='none';
   const svgId='svgChart_'+tab;
   let existing=document.getElementById(svgId);
   if(existing) existing.remove();
   const div=document.createElement('div');
-  div.id=svgId; div.innerHTML=svgHtml;
+  div.id=svgId; div.innerHTML=svgHtmlFull;
   canvas.parentElement.insertBefore(div,canvas);
+
+  // SVG 마우스 이벤트 연결
+  const tooltip=document.getElementById(tab+'Tooltip');
+  const vlineId='vline_'+tab;
+  div.querySelectorAll('.overlay rect').forEach(rect=>{
+    rect.addEventListener('mouseenter',e=>{
+      const i=parseInt(rect.getAttribute('data-i'));
+      const cd=canvas._chartData;
+      if(!cd)return;
+      const date=cd.allDates[i];
+      const total=cd.totalVals[i];
+      const partnerLines=cd.datasets
+        .filter(ds=>ds.vals[i]>0)
+        .sort((a,b)=>b.vals[i]-a.vals[i])
+        .slice(0,5)
+        .map(ds=>`<div style="display:flex;justify-content:space-between;gap:12px;margin-top:3px"><span style="color:${ds.color};opacity:.9">${ds.name}</span><span style="font-weight:500">${cd.metric==='views'?fn(ds.vals[i]):ds.vals[i]}</span></div>`)
+        .join('');
+      tooltip.innerHTML=`
+        <div style="color:var(--muted);font-size:10px;margin-bottom:4px">${date.slice(5).replace('-','/')}</div>
+        <div style="display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:2px">
+          <span style="color:var(--gold)">전체</span>
+          <span style="font-weight:700;color:var(--gold)">${cd.metric==='views'?fn(total):total}</span>
+        </div>
+        ${partnerLines}
+      `;
+      // 툴팁 위치
+      const svgRect=div.getBoundingClientRect();
+      const rectBox=rect.getBoundingClientRect();
+      const cx=rectBox.left+rectBox.width/2-svgRect.left;
+      tooltip.style.display='block';
+      const tw=tooltip.offsetWidth||150;
+      let tx=cx-tw/2;
+      if(tx<0)tx=4;
+      if(tx+tw>svgRect.width)tx=svgRect.width-tw-4;
+      tooltip.style.left=tx+'px';
+      tooltip.style.top='4px';
+    });
+    rect.addEventListener('mouseleave',()=>{ tooltip.style.display='none'; });
+  });
 
   // X축 레이블
   const step=Math.max(1,Math.floor(n/8));
@@ -940,6 +994,57 @@ function rDailyChart(tab, dr){
     ...datasets.filter(ds=>ds.vals.some(v=>v>0)).slice(0,4).map(ds=>`<span style="display:flex;align-items:center;gap:3px"><span style="width:14px;height:1.5px;background:${ds.color}55;display:inline-block"></span>${ds.name}</span>`),
     datasets.length>4?`<span style="color:var(--muted)">외 ${datasets.length-4}명</span>`:''
   ].join('');
+}
+
+function exTrendCSV(tab){
+  const dr2=lastDR||getDR();
+  if(!dr2){toast('먼저 데이터를 조회해주세요','err');return;}
+  const canvas=document.getElementById(tab+'Chart');
+  const cd=canvas?._chartData;
+  if(!cd||!cd.allDates.length){toast('차트 데이터가 없습니다','err');return;}
+
+  const {allDates,datasets,totalVals}=cd;
+  const partnerNames=datasets.map(d=>d.name);
+
+  // 헤더
+  const header=['날짜','전체 업로드','전체 조회수',...partnerNames.map(n=>n+' 업로드'),...partnerNames.map(n=>n+' 조회수')];
+
+  // 파트너별 업로드+조회수 둘 다 필요하므로 metric 구분 없이 두 가지 모두 집계
+  // 업로드 수
+  let uploadDs=[], viewDs=[];
+  if(tab==='yt'||tab==='int'){
+    ytData.filter(d=>!d.error).forEach(d=>{
+      uploadDs.push({name:d.name,vals:allDates.map(date=>(d.pubgmVideos||[]).filter(v=>toKSTDate(v.publishedAt)===date).length)});
+      viewDs.push({name:d.name,vals:allDates.map(date=>(d.pubgmVideos||[]).filter(v=>toKSTDate(v.publishedAt)===date).reduce((s,v)=>s+v.viewCount,0))});
+    });
+  }
+  if(tab==='sns'||tab==='int'){
+    const sp=[...new Set(snsData.map(r=>r.partnerName).filter(Boolean))];
+    sp.forEach(name=>{
+      uploadDs.push({name,vals:allDates.map(date=>snsData.filter(r=>r.partnerName===name&&normDate(r.uploadDate)===date).length)});
+      viewDs.push({name,vals:allDates.map(date=>snsData.filter(r=>r.partnerName===name&&normDate(r.uploadDate)===date).reduce((s,r)=>s+r.views,0))});
+    });
+  }
+  const names=[...new Set([...uploadDs.map(d=>d.name)])];
+  const uMap=Object.fromEntries(uploadDs.map(d=>[d.name,d.vals]));
+  const vMap=Object.fromEntries(viewDs.map(d=>[d.name,d.vals]));
+
+  const rows=allDates.map((date,i)=>{
+    const tu=names.reduce((s,n)=>s+(uMap[n]?.[i]||0),0);
+    const tv=names.reduce((s,n)=>s+(vMap[n]?.[i]||0),0);
+    return[date,tu,tv,...names.map(n=>uMap[n]?.[i]||0),...names.map(n=>vMap[n]?.[i]||0)];
+  });
+
+  const tabName=tab==='yt'?'YouTube':tab==='sns'?'TikTok_Instagram':'통합현황';
+  const csv=[[...['날짜','전체 업로드','전체 조회수'],...names.map(n=>n+' 업로드'),...names.map(n=>n+' 조회수')],...rows]
+    .map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('
+');
+  const a=Object.assign(document.createElement('a'),{
+    href:URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv'})),
+    download:`PUBGM_트렌드_${tabName}_${dr2.after.slice(0,10)}_${dr2.before.slice(0,10)}.csv`
+  });
+  a.click();
+  toast('트렌드 CSV 내보내기 완료','ok');
 }
 
 function niceScale(max){
