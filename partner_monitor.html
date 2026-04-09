@@ -889,8 +889,10 @@ function rIntTable(){
     <td style="font-weight:500">${r.n}</td>
     <td><div><span class="num">${r.yu}</span>${prevYtData.length?`<div style="font-size:10px">${diffBadge(r.yu,py.uploads,'')}</div>`:''}</div></td>
     <td><div><span class="num" style="color:#ff6666">${fn(r.yv)}</span>${prevYtData.length?`<div style="font-size:10px">${diffBadge(r.yv,py.totalViews,'')}</div>`:''}</div></td>
-    <td class="num">${r.ttu}</td><td class="num" style="color:var(--tiktok)">${fn(r.ttv)}</td>
-    <td class="num">${r.igu}</td><td class="num" style="color:var(--insta)">${fn(r.igv)}</td>
+    <td><div><span class="num">${r.ttu}</span>${prevDR?`<div style="font-size:10px">${diffBadge(r.ttu,ps.tt.count,'')}</div>`:''}</div></td>
+    <td><div><span class="num" style="color:var(--tiktok)">${fn(r.ttv)}</span>${prevDR?`<div style="font-size:10px">${diffBadge(r.ttv,ps.tt.views,'')}</div>`:''}</div></td>
+    <td><div><span class="num">${r.igu}</span>${prevDR?`<div style="font-size:10px">${diffBadge(r.igu,ps.ig.count,'')}</div>`:''}</div></td>
+    <td><div><span class="num" style="color:var(--insta)">${fn(r.igv)}</span>${prevDR?`<div style="font-size:10px">${diffBadge(r.igv,ps.ig.views,'')}</div>`:''}</div></td>
     <td><div><span class="num gold">${r.totalU}</span>${(prevYtData.length||prevDR)?`<div style="font-size:10px">${diffBadge(r.totalU,prevTotalU,'')}</div>`:''}</div></td>
     <td><div><span class="num cyan">${fn(r.totalV)}</span>${(prevYtData.length||prevDR)?`<div style="font-size:10px">${diffBadge(r.totalV,prevTotalV,'')}</div>`:''}</div></td>
   </tr>`;}).join('');
