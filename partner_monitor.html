@@ -398,6 +398,7 @@ let partners = JSON.parse(localStorage.getItem('pm_partners')||'null') || [
 ];
 let ytData=[], snsData=[], sf='all', sk='weekly', sd=-1;
 let lastDR=null; // 마지막 조회 날짜 범위 저장
+const chartDataStore={}; // 탭별 차트 데이터 저장
 
 // ISO 날짜를 한국 시간(KST) 기준 YYYY-MM-DD로 변환
 function toKSTDate(isoStr){
@@ -932,7 +933,7 @@ function rDailyChart(tab, dr){
   const svgHtmlFull=svgHtml.replace('</svg>',`<g class="overlay">${overlayRects}</g></svg>`);
 
   // 툴팁 데이터 저장
-  canvas._chartData={allDates,datasets,totalVals,metric};
+  chartDataStore[tab]={allDates,datasets,totalVals,metric};
 
   // canvas 대신 SVG 삽입
   canvas.style.display='none';
@@ -949,7 +950,7 @@ function rDailyChart(tab, dr){
   div.querySelectorAll('.overlay rect').forEach(rect=>{
     rect.addEventListener('mouseenter',e=>{
       const i=parseInt(rect.getAttribute('data-i'));
-      const cd=canvas._chartData;
+      const cd=chartDataStore[tab];
       if(!cd)return;
       const date=cd.allDates[i];
       const total=cd.totalVals[i];
@@ -999,8 +1000,7 @@ function rDailyChart(tab, dr){
 function exTrendCSV(tab){
   const dr2=lastDR||getDR();
   if(!dr2){toast('먼저 데이터를 조회해주세요','err');return;}
-  const canvas=document.getElementById(tab+'Chart');
-  const cd=canvas?._chartData;
+  const cd=chartDataStore[tab];
   if(!cd||!cd.allDates.length){toast('차트 데이터가 없습니다','err');return;}
 
   const {allDates,datasets,totalVals}=cd;
