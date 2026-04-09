@@ -437,8 +437,8 @@ function stab(n,btn){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   btn.classList.add('active'); document.getElementById('p'+n).classList.add('active');
   requestAnimationFrame(()=>{
-    if(n==='yt') rDailyChart('yt');
-    else if(n==='sns') rDailyChart('sns');
+    if(n==='yt') rDailyChart('yt',lastDR);
+    else if(n==='sns') rDailyChart('sns',lastDR);
     else if(n==='int') rIntAll();
   });
 }
@@ -703,7 +703,7 @@ async function loadSheetsData(){
     setSnsStatus('ok',`✓ ${snsData.length}건`);
     document.getElementById('snsBdg').textContent=snsData.length;
     document.getElementById('snsLastUpdate').textContent='업데이트: '+new Date().toLocaleString('ko-KR');
-    rSnsAll(); rIntAll();
+    rSnsAll(); if(lastDR) rIntAll();
     toast(`${snsData.length}건 로드 완료`,'ok');
   }catch(e){setSnsStatus('error','✕ '+e.message);toast('시트 불러오기 실패','err');}
   finally{btn.disabled=false;}
@@ -711,7 +711,7 @@ async function loadSheetsData(){
 function setSnsStatus(t,m){const el=document.getElementById('sheetsStatus');el.className='sheets-status '+t;el.textContent=m;}
 
 function rSnsAll(){
-  rSnsRow1(); rDailyChart('sns'); rRank('sns'); rNotice('sns'); rSns();
+  rSnsRow1(); rDailyChart('sns',lastDR); rRank('sns'); rNotice('sns'); rSns();
 }
 
 function rSnsRow1(){
@@ -754,7 +754,7 @@ function rSns(){
 
 // ── 통합 현황 ────────────────────────────
 function rIntAll(){
-  rIntRow1(); rDailyChart('int'); rRank('int'); rNotice('int'); rIntTable();
+  rIntRow1(); rDailyChart('int',lastDR); rRank('int'); rNotice('int'); rIntTable();
 }
 
 function rIntRow1(){
@@ -815,15 +815,7 @@ function rDailyChart(tab, dr){
 
   // 날짜 범위 — 전달된 dr 우선, 없으면 getDR(), 그래도 없으면 YouTube/SNS 데이터에서 자동 추출
   let dr2=dr||lastDR||getDR();
-  if(!dr2){
-    // 데이터에서 날짜 범위 자동 추출
-    const allRaw=[];
-    ytData.filter(d=>!d.error).forEach(d=>(d.pubgmVideos||[]).forEach(v=>allRaw.push(v.publishedAt.slice(0,10))));
-    snsData.forEach(r=>{ const nd=normDate(r.uploadDate); if(nd)allRaw.push(nd); });
-    if(!allRaw.length){canvas.style.height='0';return;}
-    allRaw.sort();
-    dr2={after:allRaw[0]+'T00:00:00Z',before:allRaw[allRaw.length-1]+'T23:59:59Z',label:'전체'};
-  }
+  if(!dr2){ canvas.style.height='0'; return; }
 
   // 날짜 범위 생성 (조회 기간 전체 연속 날짜)
   let allDates=[];
