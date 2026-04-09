@@ -609,7 +609,7 @@ async function fetchAll(){
 
     document.getElementById('ytBdg').textContent=res.filter(r=>!r.error).length+'개';
     document.getElementById('updateTime').textContent='업데이트: '+new Date().toLocaleString('ko-KR')+' · '+dr.label;
-    rYtAll(dr); rIntAll();
+    rYtAll(dr); rSnsAll(); rIntAll();
     toast(`${res.filter(r=>!r.error).length}개 채널 수집 완료`,'ok');
   }catch(e){toast(e.message,'err');}
   finally{btn.disabled=false;ld.style.display='none';}
@@ -762,7 +762,7 @@ async function loadSheetsData(){
     setSnsStatus('ok',`✓ ${snsData.length}건`);
     document.getElementById('snsBdg').textContent=snsData.length;
     document.getElementById('snsLastUpdate').textContent='업데이트: '+new Date().toLocaleString('ko-KR');
-    rSnsAll(); if(lastDR) rIntAll();
+    rSnsAll(); rIntAll();
     toast(`${snsData.length}건 로드 완료`,'ok');
   }catch(e){setSnsStatus('error','✕ '+e.message);toast('시트 불러오기 실패','err');}
   finally{btn.disabled=false;}
@@ -792,12 +792,14 @@ function rSnsRow1(){
 
 function fSns(f,btn){sf=f;document.querySelectorAll('#psns .ftab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');rSns();}
 
-// lastDR 기간으로 필터링된 SNS 데이터 반환
+// 현재 기간 설정으로 필터링된 SNS 데이터 반환
 function getSnsFiltered(){
-  if(!lastDR)return snsData;
+  const dr=lastDR||getDR();
+  if(!dr)return snsData;
+  const from=dr.after.slice(0,10), to=dr.before.slice(0,10);
   return snsData.filter(r=>{
     const d=normDate(r.uploadDate);
-    return d>=lastDR.after.slice(0,10)&&d<=lastDR.before.slice(0,10);
+    return d>=from&&d<=to;
   });
 }
 function rSns(){
