@@ -178,11 +178,8 @@ tr.drow:hover td{background:rgba(247,183,49,.02)}
   <div class="logo">P</div>
   <div><div class="hdr-title">PARTNER MONITOR</div><div class="hdr-sub">PUBG MOBILE KR · 파트너 성과 현황판 (PUBGM 콘텐츠 전용)</div></div>
   <div class="hdr-controls">
-    <div class="api-wrap">
-      <span class="api-lbl">API KEY</span>
-      <input type="password" class="api-inp" id="apiKeyInput" placeholder="YouTube Data API v3 키" autocomplete="off" oninput="saveApiKey()">
-    </div>
-    <span id="apiKeySaved" style="color:var(--green)"></span>
+    <span id="apiKeySaved" style="display:none"></span>
+    <input type="hidden" id="apiKeyInput" value="">
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
       <select class="sel" id="periodPreset" onchange="applyPreset()" style="width:96px">
         <option value="7">최근 7일</option>
@@ -445,8 +442,7 @@ let ytDM='uploads', snsDM='uploads', intDM='uploads';
 
 // ── 초기화 ────────────────────────────────
 window.onload = () => {
-  const k = localStorage.getItem('pm_apikey');
-  if(k){ document.getElementById('apiKeyInput').value=k; setSaved(true); }
+  // API 키는 Apps Script 서버에서 관리
   rTags();
   const t=new Date(), f=new Date(t); f.setDate(t.getDate()-30);
   document.getElementById('dateTo').value   = t.toLocaleDateString('sv-SE');
@@ -459,8 +455,8 @@ window.onload = () => {
   }
 };
 
-function saveApiKey(){ const k=document.getElementById('apiKeyInput').value.trim(); localStorage.setItem('pm_apikey',k); setSaved(!!k); }
-function setSaved(b){ const el=document.getElementById('apiKeySaved'); el.textContent=b?'✓ 저장됨':''; el.style.color=b?'var(--green)':''; }
+function saveApiKey(){}
+function setSaved(b){}
 
 function stab(n,btn){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
@@ -498,9 +494,8 @@ function pDur(s){ if(!s)return 0; const m=s.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\
 function isSh(d,t){ return(pDur(d)>0&&pDur(d)<=60)||/#shorts/i.test(t); }
 
 async function ytFetch(ep,params){
-  const key=document.getElementById('apiKeyInput').value.trim();
-  if(!key)throw new Error('API 키를 입력해주세요');
-  const url=`${YT_BASE}/${ep}?${new URLSearchParams({...params,key})}`;
+  // API 키는 Apps Script 서버에서 자동 주입
+  const url=`${YT_BASE}/${ep}?${new URLSearchParams(params)}`;
   const proxyUrl=`${APPS_PROXY}?endpoint=${encodeURIComponent(url)}`;
   const r=await fetch(proxyUrl);
   if(!r.ok)throw new Error(`HTTP ${r.status}`);
