@@ -1037,8 +1037,7 @@ function exTrendCSV(tab){
 
   const tabName=tab==='yt'?'YouTube':tab==='sns'?'TikTok_Instagram':'통합현황';
   const csv=[[...['날짜','전체 업로드','전체 조회수'],...names.map(n=>n+' 업로드'),...names.map(n=>n+' 조회수')],...rows]
-    .map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('
-');
+    .map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
   const a=Object.assign(document.createElement('a'),{
     href:URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv'})),
     download:`PUBGM_트렌드_${tabName}_${dr2.after.slice(0,10)}_${dr2.before.slice(0,10)}.csv`
