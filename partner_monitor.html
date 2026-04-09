@@ -216,8 +216,8 @@ tr.drow:hover td{background:rgba(247,183,49,.02)}
   <!-- Row 1 -->
   <div class="row1">
     <div class="scard gold"><div class="lbl">총 파트너 수</div><div class="val" id="ytP">—</div><div class="sub">모니터링 채널</div></div>
-    <div class="scard cyan"><div class="lbl">영상 업로드 수</div><div class="val" id="ytU">—</div><div class="sub" id="ytUsub">PUBGM 관련 영상</div></div>
-    <div class="scard green"><div class="lbl">총 조회수 합계</div><div class="val" id="ytV">—</div><div class="sub">수집 영상 기준</div></div>
+    <div class="scard cyan"><div class="lbl">영상 업로드 수</div><div class="val" id="ytU">—</div><div class="sub" id="ytUsub">PUBGM 관련 영상</div><div class="sub" id="ytUDiff" style="margin-top:4px;font-size:11px"></div></div>
+    <div class="scard green"><div class="lbl">총 조회수 합계</div><div class="val" id="ytV">—</div><div class="sub">수집 영상 기준</div><div class="sub" id="ytVDiff" style="margin-top:4px;font-size:11px"></div></div>
   </div>
   <!-- Row 2 -->
   <div class="row2">
@@ -277,8 +277,8 @@ tr.drow:hover td{background:rgba(247,183,49,.02)}
 <div class="panel" id="psns">
   <!-- Row 1 -->
   <div class="row1">
-    <div class="scard gold"><div class="lbl">총 파트너 수</div><div class="val" id="snsP">—</div><div class="sub">TikTok + Instagram</div></div>
-    <div class="scard cyan"><div class="lbl">영상 업로드 수</div><div class="val" id="snsU">—</div><div class="sub">콘텐츠 건수</div></div>
+    <div class="scard gold"><div class="lbl">총 파트너 수</div><div class="val" id="snsP">—</div><div class="sub">TikTok + Instagram</div><div class="sub" id="snsVDiff" style="margin-top:4px;font-size:11px"></div></div>
+    <div class="scard cyan"><div class="lbl">영상 업로드 수</div><div class="val" id="snsU">—</div><div class="sub">콘텐츠 건수</div><div class="sub" id="snsUDiff" style="margin-top:4px;font-size:11px"></div></div>
     <div class="scard green"><div class="lbl">총 조회수 합계</div><div class="val" id="snsV">—</div><div class="sub">TikTok + Instagram</div></div>
   </div>
   <!-- Row 2 -->
@@ -339,7 +339,7 @@ tr.drow:hover td{background:rgba(247,183,49,.02)}
   <!-- Row 1 -->
   <div class="row1">
     <div class="scard gold"><div class="lbl">총 파트너 수</div><div class="val" id="intP">—</div><div class="sub">YT + TT + IG</div></div>
-    <div class="scard cyan"><div class="lbl">영상 업로드 수</div><div class="val" id="intU">—</div><div class="sub">전 플랫폼 합산</div></div>
+    <div class="scard cyan"><div class="lbl">영상 업로드 수</div><div class="val" id="intU">—</div><div class="sub">전 플랫폼 합산</div><div class="sub" id="intVDiff" style="margin-top:4px;font-size:11px"></div><div class="sub" id="intUDiff" style="margin-top:4px;font-size:11px"></div></div>
     <div class="scard green"><div class="lbl">총 조회수 합계</div><div class="val" id="intV">—</div><div class="sub">전 플랫폼 합산</div></div>
   </div>
   <!-- Row 2 -->
@@ -398,6 +398,22 @@ let partners = JSON.parse(localStorage.getItem('pm_partners')||'null') || [
 ];
 let ytData=[], snsData=[], sf='all', sk='weekly', sd=-1;
 let lastDR=null; // 마지막 조회 날짜 범위 저장
+let prevYtData=[]; // 직전 기간 YouTube 데이터
+let prevDR=null;   // 직전 기간 날짜 범위
+
+// 직전 동기간 날짜 범위 계산
+function getPrevDR(dr){
+  const s=new Date(dr.after.slice(0,10));
+  const e=new Date(dr.before.slice(0,10));
+  const days=Math.round((e-s)/86400000)+1;
+  const ps=new Date(s); ps.setDate(ps.getDate()-days);
+  const pe=new Date(e); pe.setDate(pe.getDate()-days);
+  return{
+    after:ps.toLocaleDateString('sv-SE'),
+    before:pe.toLocaleDateString('sv-SE'),
+    label:`직전 ${days}일`
+  };
+}
 const chartDataStore={}; // 탭별 차트 데이터 저장
 
 // ISO 날짜를 한국 시간(KST) 기준 YYYY-MM-DD로 변환
@@ -574,9 +590,26 @@ async function fetchAll(){
       }catch(e){ res.push({name:p.name,handle:p.handle,error:e.message,uploads:0,totalViews:0,pubgmVideos:[],videos:[]}); }
     }
     ytData=res;
+    lastDR=dr;
+
+    // 직전 동기간 수집
+    document.getElementById('ldMsg').textContent='직전 기간 비교 데이터 수집 중...';
+    prevDR=getPrevDR(dr);
+    const prevRes=[];
+    for(const p of partners){
+      try{
+        const d=res.find(r=>r.name===p.name&&!r.error);
+        if(!d){prevRes.push({name:p.name,uploads:0,totalViews:0});continue;}
+        const pvids=await getVids(d.channelId,prevDR.after+'T00:00:00Z',prevDR.before+'T23:59:59Z');
+        const ppv=pvids.filter(v=>v.isPubgm);
+        prevRes.push({name:p.name,uploads:ppv.length,totalViews:ppv.reduce((s,v)=>s+v.viewCount,0)});
+      }catch(e){prevRes.push({name:p.name,uploads:0,totalViews:0});}
+    }
+    prevYtData=prevRes;
+
     document.getElementById('ytBdg').textContent=res.filter(r=>!r.error).length+'개';
     document.getElementById('updateTime').textContent='업데이트: '+new Date().toLocaleString('ko-KR')+' · '+dr.label;
-    lastDR=dr; rYtAll(dr); rIntAll();
+    rYtAll(dr); rIntAll();
     toast(`${res.filter(r=>!r.error).length}개 채널 수집 완료`,'ok');
   }catch(e){toast(e.message,'err');}
   finally{btn.disabled=false;ld.style.display='none';}
@@ -590,12 +623,21 @@ function rYtAll(dr){
 
 function rYtRow1(){
   const ok=ytData.filter(d=>!d.error);
+  const curU=ok.reduce((s,d)=>s+d.uploads,0);
+  const curV=ok.reduce((s,d)=>s+d.totalViews,0);
   document.getElementById('ytP').textContent=ok.length;
-  document.getElementById('ytU').textContent=ok.reduce((s,d)=>s+d.uploads,0);
-  document.getElementById('ytV').textContent=fn(ok.reduce((s,d)=>s+d.totalViews,0));
+  document.getElementById('ytU').textContent=curU;
+  document.getElementById('ytV').textContent=fn(curV);
+  if(prevYtData.length){
+    const prevU=prevYtData.reduce((s,d)=>s+d.uploads,0);
+    const prevV=prevYtData.reduce((s,d)=>s+d.totalViews,0);
+    document.getElementById('ytUDiff').innerHTML=diffBadge(curU,prevU,'건');
+    document.getElementById('ytVDiff').innerHTML=diffBadge(curV,prevV,'');
+  }
 }
 
 function rTbl(){
+  const prevYtMap=Object.fromEntries(prevYtData.map(d=>[d.name,d]));
   const srch=document.getElementById('ytSrch').value.toLowerCase();
   const sv=document.getElementById('ytSort').value;
   let data=ytData.filter(d=>!srch||d.name.toLowerCase().includes(srch)||d.handle.toLowerCase().includes(srch));
@@ -621,9 +663,9 @@ function rTbl(){
     return`<tr class="drow" id="yr${i}" onclick="togV(${i},this)">
       <td><div class="ch-cell"><div class="av">${av}</div><div><div class="ch-name">${d.title||d.name}</div><div class="ch-handle">${d.handle}</div></div></div></td>
       <td><span class="num">${fn(d.subscribers)}</span></td>
-      <td><span class="pill ${wc}">${d.uploads}건</span></td>
+      <td><div><span class="pill ${wc}">${d.uploads}건</span>${prevYtMap[d.name]?`<span style="font-size:10px;margin-left:4px">${diffBadge(d.uploads,prevYtMap[d.name].uploads,'')}</span>`:''}</div></td>
       <td><div style="display:flex;gap:3px"><span class="pill lg">동${lc}</span><span class="pill sh">S${sc}</span></div></td>
-      <td><span class="num gold">${fn(d.totalViews)}</span></td>
+      <td><div><span class="num gold">${fn(d.totalViews)}</span>${prevYtMap[d.name]?`<div style="font-size:10px;margin-top:1px">${diffBadge(d.totalViews,prevYtMap[d.name].totalViews,'')}</div>`:''}</div></td>
       <td><span class="num">${fn(d.totalLikes)}</span></td>
       <td><span class="num">${fn(d.totalComments)}</span></td>
       <td style="font-size:11px;color:var(--muted)">${ld}</td>
@@ -734,9 +776,17 @@ function rSnsAll(){
 function rSnsRow1(){
   const tt=snsData.filter(r=>r.platform==='tiktok'), ig=snsData.filter(r=>r.platform==='instagram');
   const partners_=[...new Set(snsData.map(r=>r.partnerName).filter(Boolean))];
+  const curU=snsData.length;
+  const curV=snsData.reduce((s,r)=>s+r.views,0);
   document.getElementById('snsP').textContent=partners_.length;
-  document.getElementById('snsU').textContent=snsData.length;
-  document.getElementById('snsV').textContent=fn(snsData.reduce((s,r)=>s+r.views,0));
+  document.getElementById('snsU').textContent=curU;
+  document.getElementById('snsV').textContent=fn(curV);
+  if(prevDR){
+    const prev=snsData.filter(r=>{ const d=normDate(r.uploadDate); return d>=prevDR.after&&d<=prevDR.before; });
+    const prevU=prev.length, prevV=prev.reduce((s,r)=>s+r.views,0);
+    document.getElementById('snsUDiff').innerHTML=diffBadge(curU,prevU,'건');
+    document.getElementById('snsVDiff').innerHTML=diffBadge(curV,prevV,'');
+  }
 }
 
 function fSns(f,btn){sf=f;document.querySelectorAll('#psns .ftab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');rSns();}
@@ -761,9 +811,11 @@ function rSns(){
   tb.innerHTML=rows.map(r=>{
     const pp=r.platform==='tiktok'?`<span class="plat-pill tt">🎵 TikTok</span>`:`<span class="plat-pill ig">📸 Instagram</span>`;
     const lk=r.links.length?`<a href="${r.links[0]}" target="_blank" style="color:var(--cyan);font-size:10px;text-decoration:none">🔗 최신 링크</a>`:'—';
+    const prevSnsCur=prevDR?snsData.filter(s=>s.partnerName===r.partnerName&&s.platform===r.platform&&normDate(s.uploadDate)>=prevDR.after&&normDate(s.uploadDate)<=prevDR.before):[];
+    const prevCount=prevSnsCur.length, prevViews=prevSnsCur.reduce((s,x)=>s+x.views,0);
     return`<tr><td style="font-weight:500">${r.partnerName}</td><td>${pp}</td>
-      <td class="num" style="color:var(--gold)">${r.count}</td>
-      <td class="num cyan">${fn(r.views)}</td>
+      <td><div><span class="num" style="color:var(--gold)">${r.count}</span>${prevDR?`<div style="font-size:10px;margin-top:1px">${diffBadge(r.count,prevCount,'')}</div>`:''}</div></td>
+      <td><div><span class="num cyan">${fn(r.views)}</span>${prevDR?`<div style="font-size:10px;margin-top:1px">${diffBadge(r.views,prevViews,'')}</div>`:''}</div></td>
       <td style="font-size:11px;color:var(--muted)">${r.latestDate||'—'}</td>
       <td>${lk}</td></tr>`;
   }).join('');
@@ -783,9 +835,19 @@ function rIntRow1(){
   const snsU_=snsData.length;
   const ytV_=ytOk.reduce((s,d)=>s+d.totalViews,0);
   const snsV_=snsData.reduce((s,r)=>s+r.views,0);
+  const curU_=ytU_+snsU_, curV_=ytV_+snsV_;
   document.getElementById('intP').textContent=allP_||'—';
-  document.getElementById('intU').textContent=(ytU_+snsU_)||'—';
-  document.getElementById('intV').textContent=fn(ytV_+snsV_)||'—';
+  document.getElementById('intU').textContent=curU_||'—';
+  document.getElementById('intV').textContent=fn(curV_)||'—';
+  if(prevYtData.length||prevDR){
+    const prevYtU=prevYtData.reduce((s,d)=>s+d.uploads,0);
+    const prevYtV=prevYtData.reduce((s,d)=>s+d.totalViews,0);
+    const prevSns=prevDR?snsData.filter(r=>{ const d=normDate(r.uploadDate); return d>=prevDR.after&&d<=prevDR.before; }):[];
+    const prevU_=prevYtU+prevSns.length;
+    const prevV_=prevYtV+prevSns.reduce((s,r)=>s+r.views,0);
+    document.getElementById('intUDiff').innerHTML=diffBadge(curU_,prevU_,'건');
+    document.getElementById('intVDiff').innerHTML=diffBadge(curV_,prevV_,'');
+  }
 }
 
 function rIntTable(){
@@ -806,13 +868,32 @@ function rIntTable(){
   }).sort((a,b)=>b.totalU-a.totalU);
   const tb=document.getElementById('intBody');
   if(!rows.length){tb.innerHTML=`<tr><td colspan="9"><div class="empty">YouTube 조회와 SNS 시트 연동을 모두 완료하면 표시됩니다.</div></td></tr>`;return;}
-  tb.innerHTML=rows.map(r=>`<tr>
+  // 직전 기간 통합 데이터 맵
+  const prevYtMapI=Object.fromEntries(prevYtData.map(d=>[d.name,d]));
+  const prevSnsMapI={};
+  if(prevDR){
+    snsData.filter(r=>{ const d=normDate(r.uploadDate); return d>=prevDR.after&&d<=prevDR.before; })
+      .forEach(r=>{
+        if(!prevSnsMapI[r.partnerName])prevSnsMapI[r.partnerName]={tt:{count:0,views:0},ig:{count:0,views:0}};
+        const k=r.platform==='tiktok'?'tt':'ig';
+        prevSnsMapI[r.partnerName][k].count++;
+        prevSnsMapI[r.partnerName][k].views+=r.views;
+      });
+  }
+  tb.innerHTML=rows.map(r=>{
+    const py=prevYtMapI[r.n]||{uploads:0,totalViews:0};
+    const ps=prevSnsMapI[r.n]||{tt:{count:0,views:0},ig:{count:0,views:0}};
+    const prevTotalU=py.uploads+ps.tt.count+ps.ig.count;
+    const prevTotalV=py.totalViews+ps.tt.views+ps.ig.views;
+    return`<tr>
     <td style="font-weight:500">${r.n}</td>
-    <td class="num">${r.yu}</td><td class="num" style="color:#ff6666">${fn(r.yv)}</td>
+    <td><div><span class="num">${r.yu}</span>${prevYtData.length?`<div style="font-size:10px">${diffBadge(r.yu,py.uploads,'')}</div>`:''}</div></td>
+    <td><div><span class="num" style="color:#ff6666">${fn(r.yv)}</span>${prevYtData.length?`<div style="font-size:10px">${diffBadge(r.yv,py.totalViews,'')}</div>`:''}</div></td>
     <td class="num">${r.ttu}</td><td class="num" style="color:var(--tiktok)">${fn(r.ttv)}</td>
     <td class="num">${r.igu}</td><td class="num" style="color:var(--insta)">${fn(r.igv)}</td>
-    <td class="num gold">${r.totalU}</td><td class="num cyan">${fn(r.totalV)}</td>
-  </tr>`).join('');
+    <td><div><span class="num gold">${r.totalU}</span>${(prevYtData.length||prevDR)?`<div style="font-size:10px">${diffBadge(r.totalU,prevTotalU,'')}</div>`:''}</div></td>
+    <td><div><span class="num cyan">${fn(r.totalV)}</span>${(prevYtData.length||prevDR)?`<div style="font-size:10px">${diffBadge(r.totalV,prevTotalV,'')}</div>`:''}</div></td>
+  </tr>`;}).join('');
 }
 
 // ── 일일 트렌드 차트 ─────────────────────
@@ -1044,6 +1125,18 @@ function exTrendCSV(tab){
   });
   a.click();
   toast('트렌드 CSV 내보내기 완료','ok');
+}
+
+function diffBadge(cur,prev,unit){
+  if(!prev&&!cur)return'';
+  if(!prev)return`<span style="color:var(--muted);font-size:10px">비교 데이터 없음</span>`;
+  const diff=cur-prev;
+  const pct=prev>0?Math.round(diff/prev*100):0;
+  const up=diff>=0;
+  const color=up?'var(--green)':'var(--red)';
+  const arrow=up?'▲':'▼';
+  const sign=up?'+':'';
+  return`<span style="color:${color}">${arrow} ${sign}${fn(Math.abs(diff))}${unit} (${sign}${pct}%)</span>`;
 }
 
 function niceScale(max){
