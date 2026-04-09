@@ -449,16 +449,16 @@ function applyPreset(){
 
 function getDR(){
   const p=document.getElementById('periodPreset').value, now=new Date();
-  const toS = now.toLocaleDateString('sv-SE');
+  const toS=now.toLocaleDateString('sv-SE'); // 오늘 YYYY-MM-DD (로컬)
   if(p==='custom'){
     const f=document.getElementById('dateFrom').value, t=document.getElementById('dateTo').value;
     if(!f||!t){toast('날짜를 입력해주세요','err');return null;}
     if(new Date(f)>new Date(t)){toast('시작일이 종료일보다 늦습니다','err');return null;}
     if((new Date(t)-new Date(f))/86400000>365){toast('최대 1년까지 가능합니다','err');return null;}
-    return{after:f+'T00:00:00Z',before:t+'T23:59:59Z',label:`${f}~${t}`};
+    return{after:f,before:t,label:`${f}~${t}`};
   }
   const days=parseInt(p), from=new Date(now); from.setDate(now.getDate()-days);
-  return{after:from.toLocaleDateString('sv-SE')+'T00:00:00Z',before:toS+'T23:59:59Z',label:`최근 ${days}일`};
+  return{after:from.toLocaleDateString('sv-SE'),before:toS,label:`최근 ${days}일`};
 }
 
 // ── YouTube API ────────────────────────────
@@ -491,8 +491,11 @@ function uploadsPlaylistId(chId){ return 'UU'+chId.slice(2); }
 async function getVids(chId,after,before){
   // playlistItems API로 채널 업로드 재생목록에서 직접 수집 → search보다 완전함
   const playlistId = uploadsPlaylistId(chId);
-  const afterDate  = new Date(after);
-  const beforeDate = new Date(before);
+  // after/before가 YYYY-MM-DD 형식 — 로컬 자정 기준으로 파싱
+  const [ay,am,ad]=after.slice(0,10).split('-').map(Number);
+  const [by,bm,bd]=before.slice(0,10).split('-').map(Number);
+  const afterDate =new Date(ay,am-1,ad);
+  const beforeDate=new Date(by,bm-1,bd,23,59,59);
   let ids=[], pt, done=false;
 
   while(!done){
@@ -545,7 +548,7 @@ async function fetchAll(){
         const ci=ch.items[0].id, tt=ch.items[0].snippet.title, th=ch.items[0].snippet.thumbnails?.default?.url;
         const[st,vids]=await Promise.all([
           ytFetch('channels',{part:'statistics',id:ci}).then(d=>d.items?.[0]?.statistics||{}),
-          getVids(ci,dr.after,dr.before)
+          getVids(ci,dr.after+'T00:00:00Z',dr.before+'T23:59:59Z')
         ]);
         const pv=vids.filter(v=>v.isPubgm);
         res.push({name:p.name,handle:p.handle,channelId:ci,title:tt,thumbnail:th,
@@ -817,10 +820,17 @@ function rDailyChart(tab, dr){
   let dr2=dr||lastDR||getDR();
   if(!dr2){ canvas.style.height='0'; return; }
 
-  // 날짜 범위 생성 (조회 기간 전체 연속 날짜)
+  // 날짜 범위 생성 (조회 기간 전체 연속 날짜) — 순수 YYYY-MM-DD 문자열로 비교
   let allDates=[];
-  const s=new Date(dr2.after.slice(0,10)), e=new Date(dr2.before.slice(0,10));
-  for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1)) allDates.push(d.toLocaleDateString('sv-SE'));
+  const sStr=dr2.after.slice(0,10), eStr=dr2.before.slice(0,10);
+  const [sy,sm,sd_]=sStr.split('-').map(Number);
+  const [ey,em,ed_]=eStr.split('-').map(Number);
+  let cur=new Date(sy,sm-1,sd_); // 로컬 자정 기준
+  const end=new Date(ey,em-1,ed_);
+  while(cur<=end){
+    allDates.push(cur.toLocaleDateString('sv-SE'));
+    cur.setDate(cur.getDate()+1);
+  }
   if(!allDates.length){canvas.style.height='0';return;}
   canvas.style.height='180px';
 
