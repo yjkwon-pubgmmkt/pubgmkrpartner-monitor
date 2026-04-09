@@ -776,7 +776,7 @@ function rSnsAll(){
 function rSnsRow1(){
   const filtered=getSnsFiltered();
   const tt=filtered.filter(r=>r.platform==='tiktok'), ig=filtered.filter(r=>r.platform==='instagram');
-  const partners_=[...new Set(filtered.map(r=>r.partnerName).filter(Boolean))];
+  const partners_=[...new Set(snsData.map(r=>r.partnerName).filter(Boolean))]; // 기간 무관 전체
   const curU=filtered.length;
   const curV=filtered.reduce((s,r)=>s+r.views,0);
   document.getElementById('snsP').textContent=partners_.length;
@@ -841,8 +841,8 @@ function rIntAll(){
 function rIntRow1(){
   const ytOk=ytData.filter(d=>!d.error);
   const ytP_=ytOk.length;
-  const snsP_=[...new Set(getSnsFiltered().map(r=>r.partnerName).filter(Boolean))].length;
-  const allP_=new Set([...ytOk.map(d=>d.name),...getSnsFiltered().map(r=>r.partnerName)]).size;
+  const snsP_=[...new Set(snsData.map(r=>r.partnerName).filter(Boolean))].length; // 기간 무관 전체
+  const allP_=new Set([...partners.map(p=>p.name),...snsData.map(r=>r.partnerName)]).size; // 기간 무관 전체
   const ytU_=ytOk.reduce((s,d)=>s+d.uploads,0);
   const filteredSns_=getSnsFiltered();
   const snsU_=filteredSns_.length;
