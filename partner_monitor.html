@@ -395,6 +395,15 @@ let partners = JSON.parse(localStorage.getItem('pm_partners')||'null') || [
 let ytData=[], snsData=[], sf='all', sk='weekly', sd=-1;
 let lastDR=null; // 마지막 조회 날짜 범위 저장
 
+// ISO 날짜를 한국 시간(KST) 기준 YYYY-MM-DD로 변환
+function toKSTDate(isoStr){
+  if(!isoStr)return'';
+  const d=new Date(isoStr);
+  // UTC+9 적용
+  const kst=new Date(d.getTime()+9*60*60*1000);
+  return kst.toISOString().slice(0,10);
+}
+
 // 날짜 문자열을 YYYY-MM-DD 형식으로 정규화
 function normDate(s){
   if(!s)return'';
@@ -556,7 +565,7 @@ async function fetchAll(){
           totalViews:pv.reduce((s,v)=>s+v.viewCount,0),
           totalLikes:pv.reduce((s,v)=>s+v.likeCount,0),
           totalComments:pv.reduce((s,v)=>s+v.commentCount,0),
-          latestDate:pv[0]?.publishedAt||null,videos:vids,pubgmVideos:pv,error:null});
+          latestDate:pv[0]?.publishedAt||null,latestDateKST:pv[0]?toKSTDate(pv[0].publishedAt):null,videos:vids,pubgmVideos:pv,error:null});
       }catch(e){ res.push({name:p.name,handle:p.handle,error:e.message,uploads:0,totalViews:0,pubgmVideos:[],videos:[]}); }
     }
     ytData=res;
@@ -603,7 +612,7 @@ function rTbl(){
     const sc=pv.filter(v=>v.isShorts).length, lc=pv.filter(v=>!v.isShorts).length;
     const wc=d.uploads===0?'warn':d.uploads>=3?'good':'ok';
     const av=d.thumbnail?`<img src="${d.thumbnail}" alt="">`:(d.name||'?')[0];
-    const ld=d.latestDate?new Date(d.latestDate).toLocaleDateString('ko-KR'):'—';
+    const ld=d.latestDate?toKSTDate(d.latestDate).replace(/-/g,'. ').replace(/^(\d{4})\. (\d{2})\. (\d{2})$/,'$1. $2. $3.'):'—';
     return`<tr class="drow" id="yr${i}" onclick="togV(${i},this)">
       <td><div class="ch-cell"><div class="av">${av}</div><div><div class="ch-name">${d.title||d.name}</div><div class="ch-handle">${d.handle}</div></div></div></td>
       <td><span class="num">${fn(d.subscribers)}</span></td>
@@ -811,44 +820,46 @@ function switchDM(m,btn,tab){
   rDailyChart(tab);
 }
 
-function rDailyChart(tab, dr){
-  const canvasId=tab+'Chart', xlabelId=tab+'XLabels', legendId=tab+'Legend';
-  const canvas=document.getElementById(canvasId); if(!canvas)return;
-  const metric=tab==='yt'?ytDM:tab==='sns'?snsDM:intDM;
-
-  // 날짜 범위 — 전달된 dr 우선, 없으면 getDR(), 그래도 없으면 YouTube/SNS 데이터에서 자동 추출
-  let dr2=dr||lastDR||getDR();
-  if(!dr2){ canvas.style.height='0'; return; }
-
-  // 날짜 범위 생성 (조회 기간 전체 연속 날짜) — 순수 YYYY-MM-DD 문자열로 비교
-  let allDates=[];
+function buildAllDates(dr2){
   const sStr=dr2.after.slice(0,10), eStr=dr2.before.slice(0,10);
   const [sy,sm,sd_]=sStr.split('-').map(Number);
   const [ey,em,ed_]=eStr.split('-').map(Number);
-  let cur=new Date(sy,sm-1,sd_); // 로컬 자정 기준
+  const dates=[];
+  let cur=new Date(sy,sm-1,sd_);
   const end=new Date(ey,em-1,ed_);
-  while(cur<=end){
-    allDates.push(cur.toLocaleDateString('sv-SE'));
-    cur.setDate(cur.getDate()+1);
-  }
-  if(!allDates.length){canvas.style.height='0';return;}
-  canvas.style.height='180px';
+  while(cur<=end){ dates.push(cur.toLocaleDateString('sv-SE')); cur.setDate(cur.getDate()+1); }
+  return dates;
+}
+
+function rDailyChart(tab, dr){
+  const wrapId=tab+'ChartWrap', xlabelId=tab+'XLabels', legendId=tab+'Legend';
+  const wrap=document.getElementById(wrapId)||document.getElementById(tab+'Chart')?.parentElement;
+  const canvas=document.getElementById(tab+'Chart');
+  if(!canvas)return;
+
+  const dr2=dr||lastDR||getDR();
+  if(!dr2){ canvas.style.height='0'; return; }
+
+  const metric=tab==='yt'?ytDM:tab==='sns'?snsDM:intDM;
+  const allDates=buildAllDates(dr2);
+  if(!allDates.length){ canvas.style.height='0'; return; }
 
   // 데이터 집계
   let datasets=[];
   if(tab==='yt'||tab==='int'){
     ytData.filter(d=>!d.error).forEach((d,pi)=>{
       const vals=allDates.map(date=>{
-        const pvs=(d.pubgmVideos||[]).filter(v=>v.publishedAt.slice(0,10)===date);
+        const pvs=(d.pubgmVideos||[]).filter(v=>toKSTDate(v.publishedAt)===date);
         return metric==='uploads'?pvs.length:pvs.reduce((s,v)=>s+v.viewCount,0);
       });
-      if(tab==='yt')datasets.push({name:d.name,color:COLORS[pi%COLORS.length],vals});
+      if(tab==='yt'||vals.some(v=>v>0))
+        datasets.push({name:d.name,color:COLORS[pi%COLORS.length],vals});
     });
   }
   if(tab==='sns'||tab==='int'){
-    const snsPartners=[...new Set(snsData.map(r=>r.partnerName).filter(Boolean))];
-    snsPartners.forEach((name,pi)=>{
-      const color=tab==='int'?COLORS[(ytData.length+pi)%COLORS.length]:COLORS[pi%COLORS.length];
+    const sp=[...new Set(snsData.map(r=>r.partnerName).filter(Boolean))];
+    sp.forEach((name,pi)=>{
+      const color=tab==='int'?COLORS[(ytData.filter(d=>!d.error).length+pi)%COLORS.length]:COLORS[pi%COLORS.length];
       const vals=allDates.map(date=>{
         const rows=snsData.filter(r=>r.partnerName===name&&normDate(r.uploadDate)===date);
         return metric==='uploads'?rows.length:rows.reduce((s,r)=>s+r.views,0);
@@ -856,66 +867,68 @@ function rDailyChart(tab, dr){
       datasets.push({name,color,vals,isSns:true});
     });
   }
-  if(!datasets.length){canvas.style.height='0';return;}
 
-  // 합계 라인
+  // 합계 (데이터 없어도 allDates 전체로 0 라인 표시)
   const totalVals=allDates.map((_,i)=>datasets.reduce((s,ds)=>s+ds.vals[i],0));
   const maxRaw=Math.max(...totalVals,1);
-  // 축 스케일 — nice round number
   const niceMax=niceScale(maxRaw);
 
-  // 캔버스 렌더
-  // 패널이 숨겨져 있으면 재시도
-  if(canvas.offsetWidth===0){ setTimeout(()=>rDailyChart(tab,dr2),50); return; }
-  const dpr=window.devicePixelRatio||1;
-  canvas.width=canvas.offsetWidth*dpr;
-  canvas.height=canvas.offsetHeight*dpr;
-  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
-  const W=canvas.offsetWidth,H=canvas.offsetHeight;
-  const pL=52,pR=12,pT=14,pB=6,cW=W-pL-pR,cH=H-pT-pB;
+  // SVG로 렌더링 — offsetWidth 불필요, 타이밍 문제 없음
   const n=allDates.length;
+  const W=900, H=180, pL=48, pR=12, pT=14, pB=6;
+  const cW=W-pL-pR, cH=H-pT-pB;
   const xP=i=>pL+(n>1?i*cW/(n-1):cW/2);
-  const yP=v=>pT+cH-(v/niceMax)*cH;
+  const yP=v=>pT+cH-Math.round((v/niceMax)*cH);
+
+  let svgParts=[];
 
   // 그리드
-  const ticks=5;
-  for(let g=0;g<=ticks;g++){
-    const y=pT+(cH/ticks)*g;
-    const val=Math.round(niceMax-(niceMax/ticks)*g);
-    ctx.strokeStyle='rgba(30,45,61,.6)';ctx.lineWidth=.5;
-    ctx.beginPath();ctx.moveTo(pL,y);ctx.lineTo(W-pR,y);ctx.stroke();
-    ctx.fillStyle='rgba(90,112,137,.8)';ctx.font='9px Arial';ctx.textAlign='right';
-    ctx.fillText(metric==='views'?fn(val):val,pL-4,y+3);
+  for(let g=0;g<=5;g++){
+    const y=pT+Math.round((cH/5)*g);
+    const val=Math.round(niceMax-(niceMax/5)*g);
+    svgParts.push(`<line x1="${pL}" y1="${y}" x2="${W-pR}" y2="${y}" stroke="rgba(30,45,61,.7)" stroke-width=".5"/>`);
+    svgParts.push(`<text x="${pL-4}" y="${y+3}" text-anchor="end" font-size="9" fill="rgba(90,112,137,.9)">${metric==='views'?fn(val):val}</text>`);
   }
 
   // 파트너별 얇은 선
   datasets.forEach(ds=>{
     if(ds.vals.every(v=>v===0))return;
-    ctx.beginPath();ctx.strokeStyle=ds.color+'55';ctx.lineWidth=1.5;
-    ds.vals.forEach((v,i)=>{ const x=xP(i),y=yP(v); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
-    ctx.stroke();
+    const pts=ds.vals.map((v,i)=>`${xP(i)},${yP(v)}`).join(' ');
+    svgParts.push(`<polyline points="${pts}" fill="none" stroke="${ds.color}55" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>`);
   });
 
   // 합계 면적
-  const g=ctx.createLinearGradient(0,pT,0,pT+cH);
-  g.addColorStop(0,'rgba(247,183,49,.2)');g.addColorStop(1,'rgba(247,183,49,.02)');
-  ctx.beginPath();
-  totalVals.forEach((v,i)=>{ const x=xP(i),y=yP(v); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
-  ctx.lineTo(xP(n-1),pT+cH);ctx.lineTo(xP(0),pT+cH);ctx.closePath();
-  ctx.fillStyle=g;ctx.fill();
+  const areaTop=totalVals.map((v,i)=>`${xP(i)},${yP(v)}`).join(' ');
+  svgParts.push(`<polygon points="${xP(0)},${pT+cH} ${areaTop} ${xP(n-1)},${pT+cH}" fill="url(#ag${tab})"/>`);
 
   // 합계 선
-  ctx.beginPath();ctx.strokeStyle='#f7b731';ctx.lineWidth=2;
-  totalVals.forEach((v,i)=>{ const x=xP(i),y=yP(v); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
-  ctx.stroke();
+  const linePts=totalVals.map((v,i)=>`${xP(i)},${yP(v)}`).join(' ');
+  svgParts.push(`<polyline points="${linePts}" fill="none" stroke="#f7b731" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`);
 
   // 포인트
   totalVals.forEach((v,i)=>{
-    ctx.beginPath();ctx.arc(xP(i),yP(v),v>0?3:1.5,0,Math.PI*2);
-    ctx.fillStyle=v>0?'#f7b731':'rgba(247,183,49,.3)';ctx.fill();
+    const r=v>0?3:1.5, fill=v>0?'#f7b731':'rgba(247,183,49,.3)';
+    svgParts.push(`<circle cx="${xP(i)}" cy="${yP(v)}" r="${r}" fill="${fill}"/>`);
   });
 
-  // X축 레이블 (최대 8개)
+  const svgHtml=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:${H}px;display:block">
+    <defs><linearGradient id="ag${tab}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(247,183,49,.2)"/>
+      <stop offset="100%" stop-color="rgba(247,183,49,.02)"/>
+    </linearGradient></defs>
+    ${svgParts.join('')}
+  </svg>`;
+
+  // canvas 대신 SVG 삽입
+  canvas.style.display='none';
+  const svgId='svgChart_'+tab;
+  let existing=document.getElementById(svgId);
+  if(existing) existing.remove();
+  const div=document.createElement('div');
+  div.id=svgId; div.innerHTML=svgHtml;
+  canvas.parentElement.insertBefore(div,canvas);
+
+  // X축 레이블
   const step=Math.max(1,Math.floor(n/8));
   const labelDates=allDates.filter((_,i)=>i===0||i===n-1||i%step===0);
   document.getElementById(xlabelId).innerHTML=labelDates.map(d=>`<span>${d.slice(5).replace('-','/')}</span>`).join('');
@@ -924,7 +937,7 @@ function rDailyChart(tab, dr){
   const legEl=document.getElementById(legendId);
   legEl.innerHTML=[
     `<span style="display:flex;align-items:center;gap:3px"><span style="width:14px;height:2px;background:var(--gold);display:inline-block;border-radius:1px"></span>전체</span>`,
-    ...datasets.slice(0,4).map(ds=>`<span style="display:flex;align-items:center;gap:3px"><span style="width:14px;height:1.5px;background:${ds.color}55;display:inline-block"></span>${ds.name}</span>`),
+    ...datasets.filter(ds=>ds.vals.some(v=>v>0)).slice(0,4).map(ds=>`<span style="display:flex;align-items:center;gap:3px"><span style="width:14px;height:1.5px;background:${ds.color}55;display:inline-block"></span>${ds.name}</span>`),
     datasets.length>4?`<span style="color:var(--muted)">외 ${datasets.length-4}명</span>`:''
   ].join('');
 }
