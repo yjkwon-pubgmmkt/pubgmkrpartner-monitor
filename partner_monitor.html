@@ -426,6 +426,38 @@ function toKSTDate(isoStr){
 }
 
 // 날짜 문자열을 YYYY-MM-DD 형식으로 정규화
+// 한국어 날짜 형식 포함 다양한 형식을 YYYY-MM-DD로 변환
+function parseKorDate(s){
+  if(!s)return'';
+  const str=String(s).trim();
+  if(!str||str==='0'||str==='null'||str==='undefined')return'';
+  // 이미 YYYY-MM-DD
+  if(/^\d{4}-\d{2}-\d{2}/.test(str))return str.slice(0,10);
+  // YYYY.MM.DD 또는 YYYY/MM/DD
+  if(/^\d{4}[./]\d{1,2}[./]\d{1,2}/.test(str)){
+    const p=str.split(/[./]/);
+    return `${p[0]}-${String(p[1]).padStart(2,'0')}-${String(p[2]).padStart(2,'0')}`;
+  }
+  // "03월 27일" 또는 "3월 27일" (연도 없으면 현재 연도)
+  const korMatch=str.match(/(\d{1,2})월\s*(\d{1,2})일/);
+  if(korMatch){
+    const year=new Date().getFullYear();
+    return `${year}-${String(korMatch[1]).padStart(2,'0')}-${String(korMatch[2]).padStart(2,'0')}`;
+  }
+  // "2026년 03월 27일"
+  const korFullMatch=str.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
+  if(korFullMatch){
+    return `${korFullMatch[1]}-${String(korFullMatch[2]).padStart(2,'0')}-${String(korFullMatch[3]).padStart(2,'0')}`;
+  }
+  // MM/DD/YYYY
+  const mdyMatch=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(mdyMatch)return `${mdyMatch[3]}-${String(mdyMatch[1]).padStart(2,'0')}-${String(mdyMatch[2]).padStart(2,'0')}`;
+  // Date 객체로 파싱 시도
+  const d=new Date(str);
+  if(!isNaN(d))return d.toLocaleDateString('sv-SE');
+  return '';
+}
+
 function normDate(s){
   if(!s)return'';
   const str=String(s).trim();
@@ -750,11 +782,14 @@ async function loadSheetsData(){
     snsData=json.slice(1).map(row=>{
       const platform=String(row[0]||'').toLowerCase();
       const link=String(row[1]||'').trim();
-      const date=String(row[2]||'').trim();
+      const rawDate=String(row[2]||'').trim();
       const views=parseInt(String(row[3]||'0').replace(/,/g,''))||0;
       const partnerName=String(row[4]||'').trim();
-      if(!link&&!partnerName)return null;
+      // 파트너명이 없으면 제외 (링크 없어도 파트너명만 있으면 포함)
+      if(!partnerName)return null;
       const plat=platform.includes('tiktok')?'tiktok':platform.includes('instagram')?'instagram':link.includes('tiktok')?'tiktok':link.includes('instagram')?'instagram':'tiktok';
+      // 날짜 정규화 — "03월 27일", "2026-03-27", "3/27/2026" 등 다양한 형식 처리
+      const date=parseKorDate(rawDate);
       return{platform:plat,link,uploadDate:date,views,partnerName};
     }).filter(Boolean);
     localStorage.setItem('pm_sns_data',JSON.stringify(snsData));
