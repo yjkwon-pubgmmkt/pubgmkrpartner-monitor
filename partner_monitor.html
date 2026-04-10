@@ -372,7 +372,7 @@ tr.drow:hover td{background:rgba(247,183,49,.02)}
   </div>
   <!-- Row 5 -->
   <div class="tbl-wrap"><table><thead><tr>
-    <th>파트너</th><th>YT 업로드</th><th>YT 조회수</th><th>TT 업로드</th><th>TT 조회수</th><th>IG 업로드</th><th>IG 조회수</th><th>전체 업로드</th><th>전체 조회수</th>
+    <th onclick="sortInt('name')" style="cursor:pointer">파트너 <span id="intSort_name"></span></th><th onclick="sortInt('yu')" style="cursor:pointer">YT 업로드 <span id="intSort_yu"></span></th><th onclick="sortInt('yv')" style="cursor:pointer">YT 조회수 <span id="intSort_yv"></span></th><th onclick="sortInt('ttu')" style="cursor:pointer">TT 업로드 <span id="intSort_ttu"></span></th><th onclick="sortInt('ttv')" style="cursor:pointer">TT 조회수 <span id="intSort_ttv"></span></th><th onclick="sortInt('igu')" style="cursor:pointer">IG 업로드 <span id="intSort_igu"></span></th><th onclick="sortInt('igv')" style="cursor:pointer">IG 조회수 <span id="intSort_igv"></span></th><th onclick="sortInt('totalU')" style="cursor:pointer">전체 업로드 <span id="intSort_totalU">↓</span></th><th onclick="sortInt('totalV')" style="cursor:pointer">전체 조회수 <span id="intSort_totalV"></span></th>
   </tr></thead>
   <tbody id="intBody"><tr><td colspan="9"><div class="empty">YouTube 조회와 SNS 시트 연동을 모두 완료하면 표시됩니다.</div></td></tr></tbody>
   </table></div>
@@ -398,6 +398,7 @@ let partners = JSON.parse(localStorage.getItem('pm_partners')||'null') || [
 ];
 let ytData=[], snsData=[], sf='all', sk='weekly', sd=-1;
 let lastDR=null; // 마지막 조회 날짜 범위 저장
+let intSortKey='totalU', intSortDir=-1; // 통합 테이블 정렬 상태
 let prevYtData=[]; // 직전 기간 YouTube 데이터
 let prevDR=null;   // 직전 기간 날짜 범위
 
@@ -918,6 +919,16 @@ function rIntRow1(){
   }
 }
 
+function sortInt(key){
+  if(intSortKey===key) intSortDir*=-1;
+  else{ intSortKey=key; intSortDir=-1; }
+  // 헤더 화살표 갱신
+  document.querySelectorAll('[id^="intSort_"]').forEach(el=>el.textContent='');
+  const el=document.getElementById('intSort_'+key);
+  if(el) el.textContent=intSortDir===-1?'↓':'↑';
+  rIntTable();
+}
+
 function rIntTable(){
   const names=[...new Set([...ytData.filter(d=>!d.error).map(d=>d.name),...snsData.map(r=>r.partnerName).filter(Boolean)])]; // 전체 파트너 (기간 무관)
   const ytMap=Object.fromEntries(ytData.filter(d=>!d.error).map(d=>[d.name,d]));
@@ -933,7 +944,12 @@ function rIntTable(){
     const s=snsMap[n]||{tt:{count:0,views:0},ig:{count:0,views:0}};
     return{n,yu:y.uploads,yv:y.totalViews,ttu:s.tt.count,ttv:s.tt.views,igu:s.ig.count,igv:s.ig.views,
       totalU:y.uploads+s.tt.count+s.ig.count,totalV:y.totalViews+s.tt.views+s.ig.views};
-  }).sort((a,b)=>b.totalU-a.totalU);
+  }).sort((a,b)=>{
+    let va=a[intSortKey], vb=b[intSortKey];
+    // 문자열(파트너명) 정렬
+    if(typeof va==='string') return intSortDir*va.localeCompare(vb,'ko');
+    return intSortDir*(vb-va);
+  });
   const tb=document.getElementById('intBody');
   if(!rows.length){tb.innerHTML=`<tr><td colspan="9"><div class="empty">YouTube 조회와 SNS 시트 연동을 모두 완료하면 표시됩니다.</div></td></tr>`;return;}
   // 직전 기간 통합 데이터 맵
@@ -1328,8 +1344,10 @@ function niceScale(max){
 function rRank(tab){
   let rankedData=[];
   if(tab==='yt'){
+    // YouTube: 조회 기간 내 업로드 수 기준
     rankedData=ytData.filter(d=>!d.error).map(d=>({name:d.name,handle:d.handle,thumbnail:d.thumbnail,uploads:d.uploads,views:d.totalViews,title:d.title}));
   } else if(tab==='sns'){
+    // SNS: 기간 필터된 데이터 기준
     const pm={};
     getSnsFiltered().forEach(r=>{
       if(!pm[r.partnerName])pm[r.partnerName]={name:r.partnerName,uploads:0,views:0};
@@ -1337,11 +1355,16 @@ function rRank(tab){
     });
     rankedData=Object.values(pm);
   } else {
+    // 통합: YouTube(기간 내) + SNS(기간 필터) 합산
     const pm={};
-    ytData.filter(d=>!d.error).forEach(d=>{ pm[d.name]={name:d.name,thumbnail:d.thumbnail,uploads:d.uploads,views:d.totalViews,title:d.title}; });
-    snsData.forEach(r=>{
+    ytData.filter(d=>!d.error).forEach(d=>{
+      pm[d.name]={name:d.name,thumbnail:d.thumbnail,uploads:d.uploads,views:d.totalViews,title:d.title};
+    });
+    getSnsFiltered().forEach(r=>{
+      if(!r.partnerName)return;
       if(!pm[r.partnerName])pm[r.partnerName]={name:r.partnerName,uploads:0,views:0};
-      else{pm[r.partnerName].uploads+=1;pm[r.partnerName].views+=r.views;}
+      pm[r.partnerName].uploads+=1;
+      pm[r.partnerName].views+=r.views;
     });
     rankedData=Object.values(pm);
   }
