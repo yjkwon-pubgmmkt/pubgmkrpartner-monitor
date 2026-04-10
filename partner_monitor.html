@@ -198,6 +198,9 @@ tr.drow:hover td{background:rgba(247,183,49,.02)}
     </div>
     <button class="btn pri" id="fetchBtn" onclick="fetchAll()">조회</button>
     <span id="updateTime"></span>
+    <button class="btn" id="ucPayBtn" onclick="runUCPayment()" style="margin-left:12px;background:#7c3aed;border-color:#7c3aed;display:none" title="대시보드 데이터 기반으로 UC 지급 프로세스를 실행합니다">
+      💰 UC 지급 프로세스 실행
+    </button>
   </div>
 </header>
 
@@ -379,7 +382,7 @@ tr.drow:hover td{background:rgba(247,183,49,.02)}
 
 <script>
 // ── 상수 ──────────────────────────────────
-const APPS_PROXY   = 'https://script.google.com/macros/s/AKfycbx7Sfsgi87goihgEeKpcCHwngCKjB3lijdgcgIMtgO55eyZjYkJ6AaQdIlTrovIMMsX/exec';
+const APPS_PROXY   = 'https://script.google.com/macros/s/AKfycby3HpxDQnURe4A-hCuqJTPYDM2Pd1vUiPnLw_fgleAJzWQWGWtTb6xtfLlPqf_ynZ8yRQ/exec';
 const SNS_SHEET_ID = '1nRSlETZFTft19tERmM1tL2Eyn3H9Z4WnyYR27GJGIWI';
 const YT_BASE      = 'https://www.googleapis.com/youtube/v3';
 const PKWS = ['pubg mobile','pubgmobile','pubgm','펍지모바일','펍지 모바일','펍지m','펍지','배그 모바일','배그모바일','배틀그라운드 모바일','배틀그라운드모바일','배모','모배','모바일배그','모바일 배그','모바일배틀그라운드','모바일 배틀그라운드'];
@@ -606,6 +609,7 @@ async function fetchAll(){
     document.getElementById('updateTime').textContent='업데이트: '+new Date().toLocaleString('ko-KR')+' · '+dr.label;
     rYtAll(dr); rSnsAll(); rIntAll();
     toast(`${res.filter(r=>!r.error).length}개 채널 수집 완료`,'ok');
+    document.getElementById('ucPayBtn').style.display='inline-flex'; // 조회 완료 후 버튼 표시
   }catch(e){toast(e.message,'err');}
   finally{btn.disabled=false;ld.style.display='none';}
 }
@@ -1145,6 +1149,102 @@ function diffCell(cur,prev){
 function numWithDiff(val,prev,color){
   const style=color?'color:'+color+';':'' ;
   return '<div><span class="num" style="'+style+'">'+val+'</span>'+diffCell(val,prev)+'</div>';
+}
+
+// ── UC 지급 프로세스 ─────────────────────────────────────────
+
+function runUCPayment(){
+  if(!ytData.length && !snsData.length){
+    toast('먼저 데이터를 조회해주세요','err'); return;
+  }
+
+  // 현재 조회 기간 확인
+  const dr = lastDR || getDR();
+  if(!dr){ toast('기간을 설정해주세요','err'); return; }
+
+  // 파트너별 YouTube 업로드 수 집계
+  const ytUploads = {};
+  ytData.filter(d=>!d.error).forEach(d=>{
+    ytUploads[d.name] = d.uploads || 0;
+  });
+
+  // 파트너별 SNS 업로드 수 집계 (필터된 기간 기준)
+  const snsFiltered = getSnsFiltered();
+  const snsUploads = {};
+  snsFiltered.forEach(r=>{
+    if(!r.partnerName) return;
+    snsUploads[r.partnerName] = (snsUploads[r.partnerName]||0) + 1;
+  });
+
+  // 전체 파트너 업로드 합산
+  const allNames = [...new Set([
+    ...ytData.filter(d=>!d.error).map(d=>d.name),
+    ...snsData.map(r=>r.partnerName).filter(Boolean)
+  ])];
+
+  const uploadSummary = allNames.map(name=>({
+    name,
+    ytUploads: ytUploads[name]||0,
+    snsUploads: snsUploads[name]||0,
+    total: (ytUploads[name]||0) + (snsUploads[name]||0)
+  }));
+
+  const MIN_UPLOADS = 4;
+  const active   = uploadSummary.filter(p=>p.total >= MIN_UPLOADS);
+  const inactive = uploadSummary.filter(p=>p.total < MIN_UPLOADS);
+
+  // 확인 팝업
+  const periodLabel = dr.label || `${dr.after.slice(0,10)} ~ ${dr.before.slice(0,10)}`;
+  let msg = `조회 기간: ${periodLabel}
+`;
+  msg += `─────────────────────
+`;
+  msg += `활동 충족 (${MIN_UPLOADS}건↑): ${active.length}명
+`;
+  active.forEach(p=> msg += `  • ${p.name}: YT ${p.ytUploads} + SNS ${p.snsUploads} = ${p.total}건
+`);
+  msg += `
+활동 미충족 (UC 미지급): ${inactive.length}명
+`;
+  inactive.forEach(p=> msg += `  • ${p.name}: ${p.total}건
+`);
+  msg += `─────────────────────
+`;
+  msg += `위 데이터로 UC 지급 프로세스를 실행하시겠습니까?
+`;
+  msg += `(지급 탭 생성 + 공유 문서 업데이트 + 메일 초안)`;
+
+  if(!confirm(msg)) return;
+
+  // Apps Script로 데이터 전송
+  const btn = document.getElementById('ucPayBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 처리 중...';
+
+  const payload = {
+    action: 'ucPayment',
+    uploadSummary,
+    period: periodLabel,
+    executedAt: new Date().toISOString()
+  };
+
+  fetch(APPS_PROXY + '?action=ucPayment', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload),
+    mode: 'no-cors' // Apps Script POST는 no-cors
+  })
+  .then(()=>{
+    toast('UC 지급 프로세스 실행 완료! Gmail 초안을 확인해주세요 😊','ok');
+    btn.textContent = '✅ 실행 완료';
+    btn.style.background = '#16a34a';
+    btn.style.borderColor = '#16a34a';
+  })
+  .catch(e=>{
+    toast('오류: '+e.message,'err');
+    btn.disabled = false;
+    btn.textContent = '💰 UC 지급 프로세스 실행';
+  });
 }
 
 function diffBadge(cur,prev,unit){
