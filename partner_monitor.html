@@ -803,22 +803,39 @@ function getSnsFiltered(){
 }
 function rSns(){
   const srch=document.getElementById('snsSrch').value.toLowerCase();
-  let data=getSnsFiltered(); // 기간 필터 적용
-  if(sf!=='all')data=data.filter(r=>r.platform===sf);
-  if(srch)data=data.filter(r=>r.partnerName.toLowerCase().includes(srch));
-  // 파트너+플랫폼 기준으로 집계
-  const agg={};
-  data.forEach(r=>{
-    const k=`${r.partnerName}__${r.platform}`;
-    if(!agg[k])agg[k]={partnerName:r.partnerName,platform:r.platform,count:0,views:0,latestDate:'',links:[]};
-    agg[k].count++;
-    agg[k].views+=r.views;
-    if(r.uploadDate>agg[k].latestDate)agg[k].latestDate=r.uploadDate;
-    if(r.link)agg[k].links.push(r.link);
-  });
-  const rows=Object.values(agg).sort((a,b)=>b.count-a.count);
+  const filtered=getSnsFiltered(); // 기간 필터 적용
   const tb=document.getElementById('snsBody');
-  if(!rows.length){tb.innerHTML=`<tr><td colspan="6"><div class="empty">${snsData.length?'해당 기간 데이터 없음':'시트 데이터 불러오기 버튼을 클릭해주세요.'}</div></td></tr>`;return;}
+
+  if(!snsData.length){
+    tb.innerHTML=`<tr><td colspan="6"><div class="empty">시트 데이터 불러오기 버튼을 클릭해주세요.</div></td></tr>`;
+    return;
+  }
+
+  // 전체 snsData에서 파트너+플랫폼 조합 추출 (기간 무관 — 등록된 파트너 전원 표시)
+  const allCombos={};
+  snsData.forEach(r=>{
+    if(!r.partnerName||!r.platform)return;
+    const k=`${r.partnerName}__${r.platform}`;
+    if(!allCombos[k])allCombos[k]={partnerName:r.partnerName,platform:r.platform,count:0,views:0,latestDate:'',links:[]};
+  });
+
+  // 기간 필터된 데이터로 count/views 채우기
+  filtered.forEach(r=>{
+    if(!r.partnerName||!r.platform)return;
+    const k=`${r.partnerName}__${r.platform}`;
+    if(!allCombos[k])allCombos[k]={partnerName:r.partnerName,platform:r.platform,count:0,views:0,latestDate:'',links:[]};
+    allCombos[k].count++;
+    allCombos[k].views+=r.views;
+    if(r.uploadDate>allCombos[k].latestDate)allCombos[k].latestDate=r.uploadDate;
+    if(r.link)allCombos[k].links.push(r.link);
+  });
+
+  // 플랫폼 필터 적용
+  let rows=Object.values(allCombos);
+  if(sf!=='all')rows=rows.filter(r=>r.platform===sf);
+  if(srch)rows=rows.filter(r=>r.partnerName.toLowerCase().includes(srch));
+  rows.sort((a,b)=>b.count-a.count||a.partnerName.localeCompare(b.partnerName,'ko'));
+
   tb.innerHTML=rows.map(r=>{
     const pp=r.platform==='tiktok'?`<span class="plat-pill tt">🎵 TikTok</span>`:`<span class="plat-pill ig">📸 Instagram</span>`;
     const lk=r.links.length?`<a href="${r.links[0]}" target="_blank" style="color:var(--cyan);font-size:10px;text-decoration:none">🔗 최신 링크</a>`:'—';
@@ -863,7 +880,7 @@ function rIntRow1(){
 }
 
 function rIntTable(){
-  const names=[...new Set([...ytData.filter(d=>!d.error).map(d=>d.name),...snsData.map(r=>r.partnerName)])];
+  const names=[...new Set([...ytData.filter(d=>!d.error).map(d=>d.name),...snsData.map(r=>r.partnerName).filter(Boolean)])]; // 전체 파트너 (기간 무관)
   const ytMap=Object.fromEntries(ytData.filter(d=>!d.error).map(d=>[d.name,d]));
   const snsMap={};
   getSnsFiltered().forEach(r=>{
