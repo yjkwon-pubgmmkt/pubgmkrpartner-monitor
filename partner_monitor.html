@@ -197,6 +197,19 @@ tr.drow:hover td{background:rgba(247,183,49,.02)}
       </div>
     </div>
     <button class="btn pri" id="fetchBtn" onclick="fetchAll()">조회</button>
+    <div id="fetchStatus" style="display:none;align-items:center;gap:10px;font-size:11px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:6px 12px">
+      <div id="fsYt" style="display:flex;align-items:center;gap:5px">
+        <span id="fsYtIcon">⏳</span>
+        <span style="color:var(--muted)">YouTube</span>
+        <span id="fsYtMsg" style="color:var(--muted)">대기 중</span>
+      </div>
+      <span style="color:var(--border)">|</span>
+      <div id="fsSns" style="display:flex;align-items:center;gap:5px">
+        <span id="fsSnsIcon">⏳</span>
+        <span style="color:var(--muted)">SNS</span>
+        <span id="fsSnsMsg" style="color:var(--muted)">대기 중</span>
+      </div>
+    </div>
     <span id="updateTime"></span>
     <button class="btn" id="ucPayBtn" onclick="runUCPayment()" style="margin-left:12px;background:#7c3aed;border-color:#7c3aed;display:none" title="대시보드 데이터 기반으로 UC 지급 프로세스를 실행합니다">
       💰 UC 지급 프로세스 실행
@@ -602,6 +615,9 @@ async function fetchAll(){
   const btn=document.getElementById('fetchBtn'); btn.disabled=true;
   const ld=document.getElementById('ytLd'); ld.style.display='flex';
   document.getElementById('ldMsg').textContent=`${dr.label} 수집 중...`;
+  showFetchStatus(true);
+  setFetchStatus('yt','loading','수집 중...');
+  setFetchStatus('sns','waiting','대기 중');
   try{
     const res=[];
     for(const p of partners){
@@ -627,6 +643,7 @@ async function fetchAll(){
 
     // 직전 동기간 수집
     document.getElementById('ldMsg').textContent='직전 기간 비교 데이터 수집 중...';
+    setFetchStatus('yt','loading','직전 기간 수집 중...');
     prevDR=getPrevDR(dr);
     const prevRes=[];
     for(const p of partners){
@@ -641,10 +658,25 @@ async function fetchAll(){
     prevYtData=prevRes;
 
     document.getElementById('ytBdg').textContent=res.filter(r=>!r.error).length+'개';
+    const ytOkCount=res.filter(r=>!r.error).length;
+    const ytErrCount=res.filter(r=>r.error).length;
+    setFetchStatus('yt', ytErrCount>0?'error':'ok',
+      ytErrCount>0?`${ytOkCount}개 완료, ${ytErrCount}개 오류`:`${ytOkCount}개 완료`);
+
+    // SNS 시트 자동 로드
+    document.getElementById('ldMsg').textContent='TikTok/Instagram 데이터 불러오는 중...';
+    setFetchStatus('sns','loading','시트 불러오는 중...');
+    try{
+      await loadSheetsData(true); // true = 조회 버튼에서 호출
+      setFetchStatus('sns','ok',`${snsData.length}건 완료`);
+    }catch(e){
+      setFetchStatus('sns','error','시트 로드 실패 — 수동으로 불러오기 필요');
+    }
+
     document.getElementById('updateTime').textContent='업데이트: '+new Date().toLocaleString('ko-KR')+' · '+dr.label;
     rYtAll(dr); rSnsAll(); rIntAll();
-    toast(`${res.filter(r=>!r.error).length}개 채널 수집 완료`,'ok');
-    document.getElementById('ucPayBtn').style.display='inline-flex'; // 조회 완료 후 버튼 표시
+    toast(`YouTube ${ytOkCount}개 + SNS 시트 수집 완료`,'ok');
+    document.getElementById('ucPayBtn').style.display='inline-flex';
   }catch(e){toast(e.message,'err');}
   finally{btn.disabled=false;ld.style.display='none';}
 }
@@ -774,7 +806,7 @@ function addCh(){
 function rmCh(i){partners.splice(i,1);localStorage.setItem('pm_partners',JSON.stringify(partners));rTags();}
 
 // ── SNS 연동 ──────────────────────────────
-async function loadSheetsData(){
+async function loadSheetsData(silentMode=false){
   const btn=document.getElementById('snsLoadBtn'); btn.disabled=true;
   setSnsStatus('loading','⏳ 불러오는 중...');
   try{
@@ -801,9 +833,11 @@ async function loadSheetsData(){
     setSnsStatus('ok',`✓ ${snsData.length}건`);
     document.getElementById('snsBdg').textContent=snsData.length;
     document.getElementById('snsLastUpdate').textContent='업데이트: '+new Date().toLocaleString('ko-KR');
+    setFetchStatus('sns','ok',`${snsData.length}건 로드 완료`);
+    showFetchStatus(true);
     rSnsAll(); rIntAll();
-    toast(`${snsData.length}건 로드 완료`,'ok');
-  }catch(e){setSnsStatus('error','✕ '+e.message);toast('시트 불러오기 실패','err');}
+    if(!silentMode) toast(`${snsData.length}건 로드 완료`,'ok');
+  }catch(e){setSnsStatus('error','✕ '+e.message);setFetchStatus('sns','error','불러오기 실패');showFetchStatus(true);toast('시트 불러오기 실패','err');}
   finally{btn.disabled=false;}
 }
 function setSnsStatus(t,m){const el=document.getElementById('sheetsStatus');el.className='sheets-status '+t;el.textContent=m;}
@@ -1317,6 +1351,23 @@ function runUCPayment(){
     btn.disabled = false;
     btn.textContent = '💰 UC 지급 프로세스 실행';
   });
+}
+
+// ── 조회 상태 표시 ──────────────────────────
+function setFetchStatus(tab, state, msg){
+  // state: 'loading' | 'ok' | 'error' | 'waiting'
+  const icons = {loading:'⏳', ok:'✅', error:'❌', waiting:'⏳'};
+  const colors = {loading:'var(--gold)', ok:'var(--green)', error:'var(--red)', waiting:'var(--muted)'};
+  const prefix = tab==='yt' ? 'fsYt' : 'fsSns';
+  const iconEl = document.getElementById(prefix+'Icon');
+  const msgEl  = document.getElementById(prefix+'Msg');
+  if(iconEl) iconEl.textContent = icons[state]||'⏳';
+  if(msgEl){ msgEl.textContent = msg; msgEl.style.color = colors[state]||'var(--muted)'; }
+}
+
+function showFetchStatus(show){
+  const el=document.getElementById('fetchStatus');
+  if(el) el.style.display=show?'flex':'none';
 }
 
 function diffBadge(cur,prev,unit){
