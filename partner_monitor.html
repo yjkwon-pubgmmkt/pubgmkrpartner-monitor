@@ -265,7 +265,7 @@ tr.drow:hover td{background:rgba(247,183,49,.02)}
   <div class="loading" id="ytLd"><div class="spin"></div><span id="ldMsg">수집 중...</span></div>
   <div class="tbl-wrap"><table><thead><tr>
     <th>채널</th><th onclick="sBy('subscribers')">구독자</th>
-    <th onclick="sBy('weekly')">PUBGM 업로드 ↓</th><th>동영상/Shorts</th>
+    <th onclick="sBy('weekly')">PUBGM 업로드 ↓</th><th>동영상/Shorts</th><th onclick="sBy('uploads')">합산</th>
     <th onclick="sBy('views')">조회수</th><th onclick="sBy('likes')">좋아요</th>
     <th onclick="sBy('comments')">댓글</th><th onclick="sBy('latest')">최근 업로드</th><th></th>
   </tr></thead>
@@ -685,9 +685,9 @@ function rTbl(){
     return va<vb?sd:va>vb?-sd:0;
   });
   const tb=document.getElementById('ytBody');
-  if(!data.length){tb.innerHTML=`<tr><td colspan="9"><div class="empty">데이터 없음</div></td></tr>`;return;}
+  if(!data.length){tb.innerHTML=`<tr><td colspan="10"><div class="empty">데이터 없음</div></td></tr>`;return;}
   tb.innerHTML=data.map((d,i)=>{
-    if(d.error)return`<tr class="drow"><td><div class="ch-cell"><div class="av">⚠</div><div><div class="ch-name">${d.name}</div><div class="ch-handle">${d.handle}</div></div></div></td><td colspan="7" style="color:var(--red);font-size:11px">${d.error}</td><td></td></tr>`;
+    if(d.error)return`<tr class="drow"><td><div class="ch-cell"><div class="av">⚠</div><div><div class="ch-name">${d.name}</div><div class="ch-handle">${d.handle}</div></div></div></td><td colspan="8" style="color:var(--red);font-size:11px">${d.error}</td><td></td></tr>`;
     const pv=d.pubgmVideos||[];
     const sc=pv.filter(v=>v.isShorts).length, lc=pv.filter(v=>!v.isShorts).length;
     const wc=d.uploads===0?'warn':d.uploads>=3?'good':'ok';
@@ -698,6 +698,7 @@ function rTbl(){
       <td><span class="num">${fn(d.subscribers)}</span></td>
       <td><div><span class="pill ${wc}">${d.uploads}건</span>${prevYtMap[d.name]?diffCell(d.uploads,prevYtMap[d.name].uploads):''}</div></td>
       <td><div style="display:flex;gap:3px"><span class="pill lg">동${lc}</span><span class="pill sh">S${sc}</span></div></td>
+      <td><span class="num" style="font-size:12px">${lc+sc}건</span></td>
       <td>${numWithDiff(fn(d.totalViews),prevYtMap[d.name]?.totalViews,'#f7b731')}</td>
       <td><span class="num">${fn(d.totalLikes)}</span></td>
       <td><span class="num">${fn(d.totalComments)}</span></td>
